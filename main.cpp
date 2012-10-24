@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
     config.lang = 6;
 
     PSWebService* webService = new PSWebService(config);
-    KCFirma* kcfirma = new KCFirma();
+    KCFirma* kcfirma = new KCFirma(config);
     Presta* presta = new Presta(config, webService, kcfirma);
     Logger* logger = new Logger(presta);
 

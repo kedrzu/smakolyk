@@ -2,12 +2,15 @@
 #include <QMap>
 
 #include <QDebug>
+#include <Qt>
 
 Presta::Presta(const Config &config, PSWebService *pswebService, KCFirma *kcFirma, QObject *parent) :
     QObject(parent),
     mPSWebService(pswebService),
     mKCFirma(kcFirma),
-    mLangId(config.lang)
+    mLangId(config.lang),
+    mFinished(true),
+    mProduktyUpload(5)
 {
 }
 
@@ -99,7 +102,7 @@ void Presta::edit(const Produkt &produkt) {
     opt.resource = "products";
     QNetworkReply* reply = mPSWebService->put(opt, *doc);
     reply->setProperty("idKC", QVariant(produkt.idKC));
-    connect(reply, SIGNAL(finished()), this, SLOT(productEdited()));
+    connect(reply, SIGNAL(finished()), this, SLOT(productEdited()), Qt::QueuedConnection);
     delete doc;
 }
 
@@ -110,7 +113,7 @@ void Presta::add(const Produkt &produkt) {
     opt.resource = "products";
     QNetworkReply* reply = mPSWebService->post(opt, *doc);
     reply->setProperty("idKC", QVariant(produkt.idKC));
-    connect(reply, SIGNAL(finished()), this, SLOT(productAdded()));
+    connect(reply, SIGNAL(finished()), this, SLOT(productAdded()), Qt::QueuedConnection);
     delete doc;
 }
 
@@ -121,7 +124,7 @@ void Presta::syncEdit(const Produkt &produkt) {
     opt.id = produkt.id;
     opt.resource = "products";
     QDomDocument* result = mPSWebService->syncPut(opt, *doc);
-    qDebug() << result->toByteArray();
+    delete result;
     delete doc;
 }
 
@@ -157,24 +160,22 @@ QDomDocument* Presta::toXML(const Kategoria &kategoria) {
 
 void Presta::edit(const Kategoria &kategoria) {
     QDomDocument* doc = toXML(kategoria);
-    //qDebug() << doc->toByteArray();
     PSWebService::Options opt;
     opt.id = kategoria.id;
     opt.resource = "categories";
     QNetworkReply* reply = mPSWebService->put(opt, *doc);
     reply->setProperty("idKC", QVariant(kategoria.idKC));
-    connect(reply, SIGNAL(finished()), this, SLOT(categoryEdited()));
+    connect(reply, SIGNAL(finished()), this, SLOT(categoryEdited()), Qt::QueuedConnection);
     delete doc;
 }
 
 void Presta::add(const Kategoria &kategoria) {
     QDomDocument* doc = toXML(kategoria);
-    //qDebug() << doc->toByteArray();
     PSWebService::Options opt;
     opt.resource = "categories";
     QNetworkReply* reply = mPSWebService->post(opt, *doc);
     reply->setProperty("idKC", QVariant(kategoria.idKC));
-    connect(reply, SIGNAL(finished()), this, SLOT(categoryAdded()));
+    connect(reply, SIGNAL(finished()), this, SLOT(categoryAdded()), Qt::QueuedConnection);
     delete doc;
 }
 
@@ -185,7 +186,7 @@ void Presta::syncEdit(const Kategoria &kategoria) {
     opt.id = kategoria.id;
     opt.resource = "categories";
     QDomDocument* result = mPSWebService->syncPut(opt, *doc);
-    qDebug() << result->toByteArray();
+    delete result;
     delete doc;
 }
 
@@ -201,8 +202,8 @@ unsigned Presta::syncAdd(const Kategoria &kategoria) {
     return id;
 }
 
-void Presta::upload() {
-
+void Presta::aktualizujKategorie()
+{
     // najpierw œci¹gamy kategorie z internetu
     PSWebService::Options opt;
     opt.resource = "categories";
@@ -228,6 +229,25 @@ void Presta::upload() {
             // TODO ³apanie b³edów
         }
     }
+}
+
+bool Presta::dodajProdukty()
+{
+    return mKCFirma->produkty(mProdukty, mProduktyUpload);
+}
+
+bool Presta::dodajProdukty(uint ile)
+{
+    return mKCFirma->produkty(mProdukty, ile);
+}
+
+void Presta::upload() {
+
+    // ustawiamy flagê
+    mFinished = false;
+
+    // kasujemy bufor b³êdnie uploadowanych produktów
+    mProduktyError.clear();
 
     // iterujemy po produktach do aktualizacji
     QMapIterator<unsigned, Produkt> it(mProdukty);
@@ -241,9 +261,11 @@ void Presta::upload() {
             kat.id = 0;
             // dodajemy kategoriê, je¿eli sie nie uda emitujemy blad i kontynujemy z nastepnym produktem
             try {
+                // kategoria dodawana jest synchronicznie
                 unsigned id = syncAdd(kat);
+                // aktualizujemy powi¹zanie
                 emit zmianaKategorii(id, it.value().kategoriaKC);
-                mKatNadrzedne[id] = 1;
+                mKatNadrzedne[id] = kat.nadrzedna;
             } catch (PSWebService::PrestaError e) {
                 emit error(e);
                 err = true;
@@ -262,6 +284,10 @@ void Presta::upload() {
             else {
                 add(it.value());
             }
+        }
+        // w przeciwnym wypadku oznaczamy produkt jako b³êdnie uploadowany
+        else {
+            mProduktyError[it.value().idKC] = KATEGORIA;
         }
     }
 
@@ -285,29 +311,47 @@ void Presta::productAdded()
         QDomDocument *doc = PSWebService::readReply(reply);
         unsigned id = Produkt::getId(doc);
         float cena = Produkt::getCena(doc);
-        mProduktyUploaded.push_back(idKC);
+        mProdukty.remove(idKC);
         emit zmianaProduktu(id, idKC, cena);
     } catch (PSWebService::PrestaError e) {
-        mProduktyError << idKC;
+        mProduktyError[idKC] = ADD_ERROR;
         emit error(e);
     } catch (PSWebService::OtherError e) {
-        mProduktyError << idKC;
+        mProduktyError[idKC] = ADD_ERROR;
         emit error(e);
     }
     reply->deleteLater();
 
     // je¿eli wszystkie operacje zosta³y wykonane emitujemy odpowiedni sygna³
-    if(mProduktyUploaded.size() + mProduktyError.size() == mProdukty.size()) {
-        foreach(unsigned i, mProduktyUploaded) {
-            mProdukty.remove(i);
-        }
-        mProduktyUploaded.clear();
-        mProduktyError.clear();
-        emit uploadFinished();
-    }
+    checkFinished();
 }
 
 void Presta::productEdited()
 {
+    QNetworkReply* reply = (QNetworkReply*)QObject::sender();
+    unsigned idKC = reply->property("idKC").toUInt();
+    try {
+        QDomDocument *doc = PSWebService::readReply(reply);
+        unsigned id = Produkt::getId(doc);
+        float cena = Produkt::getCena(doc);
+        mProdukty.remove(idKC);
+        emit zmianaProduktu(id, idKC, cena);
+    } catch (PSWebService::PrestaError e) {
+        mProduktyError[idKC] = EDIT_ERROR;
+        emit error(e);
+    } catch (PSWebService::OtherError e) {
+        mProduktyError[idKC] = EDIT_ERROR;
+        emit error(e);
+    }
+    reply->deleteLater();
 
+    // je¿eli wszystkie operacje zosta³y wykonane emitujemy odpowiedni sygna³
+    checkFinished();
+}
+
+void Presta::checkFinished() {
+    if(mProduktyError.size() == mProdukty.size()) {
+        mFinished = true;
+        emit uploadFinished();
+    }
 }

@@ -1,8 +1,7 @@
 #include "KCFirma.h"
-
 #include <QDebug>
 
-KCFirma::KCFirma(QObject *parent) :
+KCFirma::KCFirma(Config & config, QObject *parent) :
     QObject(parent)
 {
 }

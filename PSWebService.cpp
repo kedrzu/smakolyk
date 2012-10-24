@@ -7,7 +7,7 @@
 
 using namespace std;
 
-PSWebService::PSWebService(Config &config)
+PSWebService::PSWebService(const Config &config)
     : mUrl(config.url), mKey(config.key)
 {
     mManager = new QNetworkAccessManager(this);
