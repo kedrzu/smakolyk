@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core
+QT       += core network xml
 
 QT       -= gui
 
@@ -15,7 +15,19 @@ CONFIG   -= app_bundle
 TEMPLATE = app
 
 SOURCES += main.cpp \
-    PSWebService.cpp
+    PSWebService.cpp \
+    Presta.cpp \
+    Logger.cpp \
+    KCFirma.cpp \
+    Produkt.cpp \
+    Kategoria.cpp \
+    Config.cpp
 
 HEADERS += \
-    PSWebService.h
+    PSWebService.h \
+    Presta.h \
+    Kategoria.h \
+    Produkt.h \
+    Logger.h \
+    KCFirma.h \
+    Config.h
