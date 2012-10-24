@@ -3,11 +3,11 @@
 
 #include <QDebug>
 
-Presta::Presta(PSWebService *pswebService, KCFirma *kcFirma, QObject *parent) :
+Presta::Presta(const Config &config, PSWebService *pswebService, KCFirma *kcFirma, QObject *parent) :
     QObject(parent),
     mPSWebService(pswebService),
     mKCFirma(kcFirma),
-    mLangId(6)
+    mLangId(config.lang)
 {
 }
 

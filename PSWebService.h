@@ -12,6 +12,7 @@
 #include <QDomDocument>
 #include <QVector>
 #include <QMap>
+#include "Config.h"
 
 class PSWebService : public QObject
 {
@@ -43,7 +44,7 @@ public:
             code(code), msg(msg) {}
     };
 
-    PSWebService(std::string url, std::string key);
+    PSWebService(const Config &config);
     ~PSWebService();
     QNetworkReply *get(const Options& options);
     QNetworkReply *post(const Options &options, const QDomDocument& xml);

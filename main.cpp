@@ -9,10 +9,14 @@ using namespace std;
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
+    Config config;
+    config.url = "http://localhost/PrestaShop.PL_1.4.4.1-stable/";
+    config.key = "DFHHPRHFWBQ47F55373EUA25FB9QXEFL";
+    config.lang = 6;
 
-    PSWebService* webService = new PSWebService("http://localhost/PrestaShop.PL_1.4.4.1-stable/", "DFHHPRHFWBQ47F55373EUA25FB9QXEFL");
+    PSWebService* webService = new PSWebService(config);
     KCFirma* kcfirma = new KCFirma();
-    Presta* presta = new Presta(webService, kcfirma);
+    Presta* presta = new Presta(config, webService, kcfirma);
     Logger* logger = new Logger(presta);
 
     presta->upload();
