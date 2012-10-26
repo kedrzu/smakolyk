@@ -363,7 +363,7 @@ void Presta::checkFinished() {
     }
 }
 
-Zamowienie Presta::zamowienie(QDomDocument &doc) const {
+Zamowienie Presta::getZamowienie(QDomDocument &doc) const {
     QDomElement prestashop = doc.firstChildElement("prestashop");
     if(!prestashop.isNull()) {
         QDomElement order = prestashop.firstChildElement("order");
@@ -469,14 +469,14 @@ QDomDocument Presta::toXML(const Zamowienie &zamowienie)
     return doc;
 }
 
-Zamowienie Presta::zamowienie(uint id)
+Zamowienie Presta::getZamowienie(uint id)
 {
     try {
         PSWebService::Options opt;
         opt.resource = "orders";
         opt.id = id;
         QDomDocument doc = mPSWebService->syncGet(opt);
-        Zamowienie order = zamowienie(doc);
+        Zamowienie order = getZamowienie(doc);
         return order;
     } catch (PSWebService::PrestaError e) {
         e.msg = "zamowienie(uint id)";
@@ -489,7 +489,7 @@ Zamowienie Presta::zamowienie(uint id)
     }
 }
 
-QList<Zamowienie> Presta::zamowienie(QString filter)
+QList<Zamowienie> Presta::getZamowienie(QString filter)
 {
     try {
         PSWebService::Options opt;
@@ -504,7 +504,7 @@ QList<Zamowienie> Presta::zamowienie(QString filter)
             QDomNodeList orders = prestashop.firstChildElement("orders").elementsByTagName("order");
             for(int i=0; i<orders.size(); ++i) {
                 uint id = orders.at(i).toElement().attribute("id").toUInt();
-                zamowienia << zamowienie(id);
+                zamowienia << getZamowienie(id);
             }
             return zamowienia;
         } else {

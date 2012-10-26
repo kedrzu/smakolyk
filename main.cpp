@@ -33,7 +33,7 @@ int main(int argc, char *argv[])
     //        }
     //    }
 
-    QList<Zamowienie> zamowienia = presta->zamowienie(">=[1]");
+    QList<Zamowienie> zamowienia = presta->getZamowienie(">=[1]");
     for(int i=0; i<zamowienia.size(); ++i) {
         const Zamowienie& zamowienie = zamowienia.at(i);
         qDebug() << "";
@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    Zamowienie zamowienie = presta->zamowienie(2);
+    Zamowienie zamowienie = presta->getZamowienie(2);
     zamowienie.total_products = 1000;
     zamowienie.gift = 1;
     zamowienie.status = Zamowienie::BEZ_ZMIAN;

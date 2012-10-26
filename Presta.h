@@ -133,21 +133,21 @@ public:
      \param doc
      \return Zamowienie
     */
-    Zamowienie zamowienie(QDomDocument& doc) const;
+    Zamowienie getZamowienie(QDomDocument& doc) const;
     /*!
      \brief Pobiera z Presta zamówienie o podanym ID.
 
      \param id
      \return Zamowienie
     */
-    Zamowienie zamowienie(uint id);
+    Zamowienie getZamowienie(uint id);
     /*!
      \brief Pobiera z presta zamówienia według podanego filtra.
 
      \param filter
      \return QList<Zamowienie>
     */
-    QList<Zamowienie> zamowienie(QString filter);
+    QList<Zamowienie> getZamowienie(QString filter);
 
 
 signals:
