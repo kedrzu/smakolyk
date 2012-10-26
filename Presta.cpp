@@ -14,34 +14,34 @@ Presta::Presta(const Config &config, PSWebService *pswebService, KCFirma *kcFirm
 {
 }
 
-QDomDocument* Presta::getPrestaXML() {
-    QDomDocument* doc = new QDomDocument;
-    QDomElement root = doc->createElement("prestashop");
+QDomDocument Presta::getPrestaXML() {
+    QDomDocument doc;
+    QDomElement root = doc.createElement("prestashop");
     root.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
-    doc->appendChild(root);
+    doc.appendChild(root);
     return doc;
 }
 
-QDomElement Presta::buildXMLElement(QDomDocument* doc, const QString &name, const QString &value)
+QDomElement Presta::buildXMLElement(QDomDocument& doc, const QString &name, const QString &value)
 {
-    QDomElement elem = doc->createElement(name);
-    elem.appendChild(doc->createCDATASection(value));
+    QDomElement elem = doc.createElement(name);
+    elem.appendChild(doc.createCDATASection(value));
     return elem;
 }
 
-QDomElement Presta::buildXMLElement(QDomDocument *doc, const QString& name, const QString &value, int lang) {
-    QDomElement elem = doc->createElement(name);
-    QDomElement elemLang = doc->createElement("language");
+QDomElement Presta::buildXMLElement(QDomDocument &doc, const QString& name, const QString &value, int lang) {
+    QDomElement elem = doc.createElement(name);
+    QDomElement elemLang = doc.createElement("language");
     elem.appendChild(elemLang);
     elemLang.setAttribute("id", lang);
-    elemLang.appendChild(doc->createCDATASection(value));
+    elemLang.appendChild(doc.createCDATASection(value));
     return elem;
 }
 
-QDomDocument* Presta::toXML(const Produkt &produkt) {
-    QDomDocument* doc = getPrestaXML();
-    QDomElement product = doc->createElement("product");
-    doc->firstChild().appendChild(product);
+QDomDocument Presta::toXML(const Produkt &produkt) {
+    QDomDocument doc = getPrestaXML();
+    QDomElement product = doc.createElement("product");
+    doc.firstChild().appendChild(product);
 
     if(produkt.id > 0)
         product.appendChild(buildXMLElement(doc, "id",  QString::number(produkt.id)));
@@ -68,16 +68,16 @@ QDomDocument* Presta::toXML(const Produkt &produkt) {
     product.appendChild(buildXMLElement(doc, "description_short", produkt.krotkiOpis, mLangId));
     // dodawanie do kategorii
     if(produkt.kategoria > 0) {
-        QDomElement associations = doc->createElement("associations");
+        QDomElement associations = doc.createElement("associations");
         product.appendChild(associations);
-        QDomElement categories = doc->createElement("categories");
+        QDomElement categories = doc.createElement("categories");
         associations.appendChild(categories);
 
         unsigned cat = produkt.kategoria;
         unsigned i = 0;
         do {
             i++;
-            QDomElement category = doc->createElement("category");
+            QDomElement category = doc.createElement("category");
             categories.appendChild(category);
             category.appendChild(buildXMLElement(doc, "id", QString::number(cat)));
 
@@ -95,54 +95,48 @@ QDomDocument* Presta::toXML(const Produkt &produkt) {
 }
 
 void Presta::edit(const Produkt &produkt) {
-    QDomDocument* doc = toXML(produkt);
-    //qDebug() << doc->toByteArray();
+    QDomDocument doc = toXML(produkt);
+    //qDebug() << doc.toByteArray();
     PSWebService::Options opt;
     opt.id = produkt.id;
     opt.resource = "products";
-    QNetworkReply* reply = mPSWebService->put(opt, *doc);
+    QNetworkReply* reply = mPSWebService->put(opt, doc);
     reply->setProperty("idKC", QVariant(produkt.idKC));
     connect(reply, SIGNAL(finished()), this, SLOT(productEdited()), Qt::QueuedConnection);
-    delete doc;
 }
 
 void Presta::add(const Produkt &produkt) {
-    QDomDocument* doc = toXML(produkt);
-    //qDebug() << doc->toByteArray();
+    QDomDocument doc = toXML(produkt);
+    //qDebug() << doc.toByteArray();
     PSWebService::Options opt;
     opt.resource = "products";
-    QNetworkReply* reply = mPSWebService->post(opt, *doc);
+    QNetworkReply* reply = mPSWebService->post(opt, doc);
     reply->setProperty("idKC", QVariant(produkt.idKC));
     connect(reply, SIGNAL(finished()), this, SLOT(productAdded()), Qt::QueuedConnection);
-    delete doc;
 }
 
 void Presta::syncEdit(const Produkt &produkt) {
-    QDomDocument* doc = toXML(produkt);
-    qDebug() << doc->toByteArray();
+    QDomDocument doc = toXML(produkt);
+    qDebug() << doc.toByteArray();
     PSWebService::Options opt;
     opt.id = produkt.id;
     opt.resource = "products";
-    QDomDocument* result = mPSWebService->syncPut(opt, *doc);
-    delete result;
-    delete doc;
+    QDomDocument result = mPSWebService->syncPut(opt, doc);
 }
 
 unsigned Presta::syncAdd(const Produkt &produkt) {
-    QDomDocument* doc = toXML(produkt);
+    QDomDocument doc = toXML(produkt);
     PSWebService::Options opt;
     opt.resource = "products";
-    QDomDocument* result = mPSWebService->syncPost(opt, *doc);
+    QDomDocument result = mPSWebService->syncPost(opt, doc);
     unsigned id = Produkt::getId(result);
-    delete result;
-    delete doc;
     return id;
 }
 
-QDomDocument* Presta::toXML(const Kategoria &kategoria) {
-    QDomDocument* doc = getPrestaXML();
-    QDomElement category = doc->createElement("category");
-    doc->firstChild().appendChild(category);
+QDomDocument Presta::toXML(const Kategoria &kategoria) {
+    QDomDocument doc = getPrestaXML();
+    QDomElement category = doc.createElement("category");
+    doc.firstChild().appendChild(category);
 
     if(kategoria.id > 0)
         category.appendChild(buildXMLElement(doc, "id",  QString::number(kategoria.id)));
@@ -159,46 +153,47 @@ QDomDocument* Presta::toXML(const Kategoria &kategoria) {
 }
 
 void Presta::edit(const Kategoria &kategoria) {
-    QDomDocument* doc = toXML(kategoria);
+    QDomDocument doc = toXML(kategoria);
     PSWebService::Options opt;
     opt.id = kategoria.id;
     opt.resource = "categories";
-    QNetworkReply* reply = mPSWebService->put(opt, *doc);
+    QNetworkReply* reply = mPSWebService->put(opt, doc);
     reply->setProperty("idKC", QVariant(kategoria.idKC));
     connect(reply, SIGNAL(finished()), this, SLOT(categoryEdited()), Qt::QueuedConnection);
-    delete doc;
 }
 
 void Presta::add(const Kategoria &kategoria) {
-    QDomDocument* doc = toXML(kategoria);
+    QDomDocument doc = toXML(kategoria);
     PSWebService::Options opt;
     opt.resource = "categories";
-    QNetworkReply* reply = mPSWebService->post(opt, *doc);
+    QNetworkReply* reply = mPSWebService->post(opt, doc);
     reply->setProperty("idKC", QVariant(kategoria.idKC));
     connect(reply, SIGNAL(finished()), this, SLOT(categoryAdded()), Qt::QueuedConnection);
-    delete doc;
 }
 
 void Presta::syncEdit(const Kategoria &kategoria) {
-    QDomDocument* doc = toXML(kategoria);
-    qDebug() << doc->toByteArray();
+    QDomDocument doc = toXML(kategoria);
     PSWebService::Options opt;
     opt.id = kategoria.id;
     opt.resource = "categories";
-    QDomDocument* result = mPSWebService->syncPut(opt, *doc);
-    delete result;
-    delete doc;
+    QDomDocument result = mPSWebService->syncPut(opt, doc);
+}
+
+void Presta::syncEdit(const Zamowienie &zamowienie) {
+    QDomDocument doc = toXML(zamowienie);
+    PSWebService::Options opt;
+    opt.id = zamowienie.id;
+    opt.resource = "orders";
+    QDomDocument result = mPSWebService->syncPut(opt, doc);
 }
 
 unsigned Presta::syncAdd(const Kategoria &kategoria) {
-    QDomDocument* doc = toXML(kategoria);
-    qDebug() << doc->toByteArray();
+    QDomDocument doc = toXML(kategoria);
+    qDebug() << doc.toByteArray();
     PSWebService::Options opt;
     opt.resource = "categories";
-    QDomDocument* result = mPSWebService->syncPost(opt, *doc);
+    QDomDocument result = mPSWebService->syncPost(opt, doc);
     unsigned id = Kategoria::getId(result);
-    delete result;
-    delete doc;
     return id;
 }
 
@@ -208,26 +203,34 @@ void Presta::aktualizujKategorie()
     PSWebService::Options opt;
     opt.resource = "categories";
     opt.display = "[id,id_parent,active,name,link_rewrite,meta_title,meta_description,meta_keywords,description]";
-    QDomDocument* result = mPSWebService->syncGet(opt);
-    QDomElement prestashop = result->firstChildElement("prestashop");
-    if(!prestashop.isNull()) {
-        QDomElement categories = prestashop.firstChildElement("categories");
-        if(!categories.isNull()) {
-            // czyœcimy star¹ mapê
-            mKatNadrzedne.clear();
-            // pobieramy kategorie
-            QDomNodeList cats = categories.elementsByTagName("category");
-            for(int i=0; i<cats.size(); ++i) {
-                QDomNode cat = cats.at(i);
-                if(!cat.isNull() && cat.hasChildNodes()) {
-                    unsigned id = cat.firstChildElement("id").firstChild().toCDATASection().nodeValue().toUInt();
-                    unsigned nadrzedna = cat.firstChildElement("id_parent").firstChild().toCDATASection().nodeValue().toUInt();
-                    mKatNadrzedne[id] = nadrzedna;
+    try {
+        QDomDocument result = mPSWebService->syncGet(opt);
+        QDomElement prestashop = result.firstChildElement("prestashop");
+        if(!prestashop.isNull()) {
+            QDomElement categories = prestashop.firstChildElement("categories");
+            if(!categories.isNull()) {
+                // czyœcimy star¹ mapê
+                mKatNadrzedne.clear();
+                // pobieramy kategorie
+                QDomNodeList cats = categories.elementsByTagName("category");
+                for(int i=0; i<cats.size(); ++i) {
+                    QDomNode cat = cats.at(i);
+                    if(!cat.isNull() && cat.hasChildNodes()) {
+                        unsigned id = cat.firstChildElement("id").firstChild().toCDATASection().nodeValue().toUInt();
+                        unsigned nadrzedna = cat.firstChildElement("id_parent").firstChild().toCDATASection().nodeValue().toUInt();
+                        mKatNadrzedne[id] = nadrzedna;
+                    }
                 }
+            } else {
+                // TODO ³apanie b³edów
             }
-        } else {
-            // TODO ³apanie b³edów
         }
+    } catch (PSWebService::PrestaError e) {
+        emit error(e);
+        throw e;
+    } catch (PSWebService::OtherError e) {
+        emit error(e);
+        throw e;
     }
 }
 
@@ -308,15 +311,17 @@ void Presta::productAdded()
     QNetworkReply* reply = (QNetworkReply*)QObject::sender();
     unsigned idKC = reply->property("idKC").toUInt();
     try {
-        QDomDocument *doc = PSWebService::readReply(reply);
+        QDomDocument doc = PSWebService::readReply(reply);
         unsigned id = Produkt::getId(doc);
         float cena = Produkt::getCena(doc);
         mProdukty.remove(idKC);
         emit zmianaProduktu(id, idKC, cena);
     } catch (PSWebService::PrestaError e) {
+        e.msg = "productAdded";
         mProduktyError[idKC] = ADD_ERROR;
         emit error(e);
     } catch (PSWebService::OtherError e) {
+        e.msg = "productAdded";
         mProduktyError[idKC] = ADD_ERROR;
         emit error(e);
     }
@@ -331,15 +336,17 @@ void Presta::productEdited()
     QNetworkReply* reply = (QNetworkReply*)QObject::sender();
     unsigned idKC = reply->property("idKC").toUInt();
     try {
-        QDomDocument *doc = PSWebService::readReply(reply);
+        QDomDocument doc = PSWebService::readReply(reply);
         unsigned id = Produkt::getId(doc);
         float cena = Produkt::getCena(doc);
         mProdukty.remove(idKC);
         emit zmianaProduktu(id, idKC, cena);
     } catch (PSWebService::PrestaError e) {
+        e.msg = "productEdited";
         mProduktyError[idKC] = EDIT_ERROR;
         emit error(e);
     } catch (PSWebService::OtherError e) {
+        e.msg = "productEdited";
         mProduktyError[idKC] = EDIT_ERROR;
         emit error(e);
     }
@@ -355,3 +362,162 @@ void Presta::checkFinished() {
         emit uploadFinished();
     }
 }
+
+Zamowienie Presta::zamowienie(QDomDocument &doc) const {
+    QDomElement prestashop = doc.firstChildElement("prestashop");
+    if(!prestashop.isNull()) {
+        QDomElement order = prestashop.firstChildElement("order");
+        if(!order.isNull()) {
+            Zamowienie zam;
+            zam.id = order.firstChildElement("id").firstChild().toCDATASection().nodeValue().toUInt();
+            zam.status = (Zamowienie::Status)order.firstChildElement("current_state").firstChild().toCDATASection().nodeValue().toUInt();
+
+            zam.id_address_delivery = order.firstChildElement("id_address_delivery").firstChild().toCDATASection().nodeValue().toUInt();
+            zam.id_address_invoice = order.firstChildElement("id_address_invoice").firstChild().toCDATASection().nodeValue().toUInt();
+            zam.id_cart = order.firstChildElement("id_cart").firstChild().toCDATASection().nodeValue().toUInt();
+            zam.id_currency = order.firstChildElement("id_currency").firstChild().toCDATASection().nodeValue().toUInt();
+            zam.id_lang = order.firstChildElement("id_lang").firstChild().toCDATASection().nodeValue().toUInt();
+            zam.id_customer = order.firstChildElement("id_customer").firstChild().toCDATASection().nodeValue().toUInt();
+            zam.id_carrier = order.firstChildElement("id_carrier").firstChild().toCDATASection().nodeValue().toUInt();
+            zam.module = order.firstChildElement("module").firstChild().toCDATASection().nodeValue();
+            zam.invoice_number = order.firstChildElement("invoice_number").firstChild().toCDATASection().nodeValue().toUInt();
+            zam.invoice_date = order.firstChildElement("invoice_date").firstChild().toCDATASection().nodeValue();
+            zam.delivery_number = order.firstChildElement("delivery_number").firstChild().toCDATASection().nodeValue().toUInt();
+            zam.delivery_date = order.firstChildElement("delivery_date").firstChild().toCDATASection().nodeValue();
+            zam.valid = order.firstChildElement("valid").firstChild().toCDATASection().nodeValue().toUInt();
+            zam.date_add = order.firstChildElement("date_add").firstChild().toCDATASection().nodeValue();
+            zam.date_upd = order.firstChildElement("date_upd").firstChild().toCDATASection().nodeValue();
+            zam.secure_key = order.firstChildElement("secure_key").firstChild().toCDATASection().nodeValue();
+            zam.payment = order.firstChildElement("payment").firstChild().toCDATASection().nodeValue();
+            zam.recyclable = order.firstChildElement("recyclable").firstChild().toCDATASection().nodeValue().toUInt();
+            zam.gift = order.firstChildElement("gift").firstChild().toCDATASection().nodeValue().toUInt();
+            zam.gift_message = order.firstChildElement("gift_message").firstChild().toCDATASection().nodeValue();
+            zam.total_discounts = order.firstChildElement("total_discounts").firstChild().toCDATASection().nodeValue().toFloat();
+            zam.total_paid = order.firstChildElement("total_paid").firstChild().toCDATASection().nodeValue().toFloat();
+            zam.total_paid_real = order.firstChildElement("total_paid_real").firstChild().toCDATASection().nodeValue().toFloat();
+            zam.total_products = order.firstChildElement("total_products").firstChild().toCDATASection().nodeValue().toFloat();
+            zam.total_products_wt = order.firstChildElement("total_products_wt").firstChild().toCDATASection().nodeValue().toFloat();
+            zam.total_shipping = order.firstChildElement("total_shipping").firstChild().toCDATASection().nodeValue().toFloat();
+            zam.carrier_tax_rate = order.firstChildElement("carrier_tax_rate").firstChild().toCDATASection().nodeValue().toFloat();
+            zam.total_wrapping = order.firstChildElement("carrier_tax_rate").firstChild().toCDATASection().nodeValue().toFloat();
+            zam.shipping_number = order.firstChildElement("shipping_number").firstChild().toCDATASection().nodeValue().toUInt();
+            zam.conversion_rate = order.firstChildElement("conversion_rate").firstChild().toCDATASection().nodeValue().toFloat();
+
+            // produkty
+            QDomElement associations = order.firstChildElement("associations");
+            QDomNodeList order_rows = associations.firstChildElement("order_rows").elementsByTagName("order_row");
+            for(int i=0; i<order_rows.size(); ++i) {
+                QDomElement order_row = order_rows.at(i).toElement();
+                Zamowienie::Produkt produkt;
+                produkt.id = order_row.firstChildElement("product_id").firstChild().toCDATASection().nodeValue().toUInt();
+                produkt.cena = order_row.firstChildElement("product_price").firstChild().toCDATASection().nodeValue().toFloat();
+                produkt.ilosc = order_row.firstChildElement("product_quantity").firstChild().toCDATASection().nodeValue().toUInt();
+                zam.produkty << produkt;
+            }
+
+            // zwracamy zamówienie
+            return zam;
+        } else {
+            throw QString("chujnia");
+        }
+    } else {
+        throw QString("chujnia");
+    }
+}
+
+QDomDocument Presta::toXML(const Zamowienie &zamowienie)
+{
+    QDomDocument doc = getPrestaXML();
+    QDomElement order = doc.createElement("order");
+    doc.firstChild().appendChild(order);
+
+    if(zamowienie.id > 0)
+        order.appendChild(buildXMLElement(doc, "id",  QString::number(zamowienie.id)));
+    if(zamowienie.status > 0)
+        order.appendChild(buildXMLElement(doc, "current_state", QString::number((uint)zamowienie.status)));
+
+    order.appendChild(buildXMLElement(doc, "id_address_delivery", QString::number(zamowienie.id_address_delivery)));
+    order.appendChild(buildXMLElement(doc, "id_address_invoice", QString::number(zamowienie.id_address_invoice)));
+    order.appendChild(buildXMLElement(doc, "id_cart", QString::number(zamowienie.id_cart)));
+    order.appendChild(buildXMLElement(doc, "id_currency", QString::number(zamowienie.id_currency)));
+    order.appendChild(buildXMLElement(doc, "id_lang", QString::number(zamowienie.id_lang)));
+    order.appendChild(buildXMLElement(doc, "id_customer", QString::number(zamowienie.id_customer)));
+    order.appendChild(buildXMLElement(doc, "id_carrier", QString::number(zamowienie.id_carrier)));
+    order.appendChild(buildXMLElement(doc, "module", zamowienie.module));
+    order.appendChild(buildXMLElement(doc, "invoice_number", QString::number(zamowienie.invoice_number)));
+    order.appendChild(buildXMLElement(doc, "invoice_date", zamowienie.invoice_date));
+    order.appendChild(buildXMLElement(doc, "delivery_number", QString::number(zamowienie.delivery_number)));
+    order.appendChild(buildXMLElement(doc, "delivery_date", zamowienie.delivery_date));
+    order.appendChild(buildXMLElement(doc, "valid", QString::number(zamowienie.valid)));
+    order.appendChild(buildXMLElement(doc, "date_add", zamowienie.date_add));
+    order.appendChild(buildXMLElement(doc, "date_upd", zamowienie.date_upd));
+    order.appendChild(buildXMLElement(doc, "secure_key", zamowienie.secure_key));
+    order.appendChild(buildXMLElement(doc, "payment", zamowienie.payment));
+    order.appendChild(buildXMLElement(doc, "recyclable", QString::number(zamowienie.recyclable)));
+    order.appendChild(buildXMLElement(doc, "gift", QString::number(zamowienie.gift)));
+    order.appendChild(buildXMLElement(doc, "gift_message", zamowienie.gift_message));
+    order.appendChild(buildXMLElement(doc, "total_discounts", QString::number(zamowienie.total_discounts)));
+    order.appendChild(buildXMLElement(doc, "total_paid", QString::number(zamowienie.total_paid)));
+    order.appendChild(buildXMLElement(doc, "total_paid_real", QString::number(zamowienie.total_paid_real)));
+    order.appendChild(buildXMLElement(doc, "total_products", QString::number(zamowienie.total_products)));
+    order.appendChild(buildXMLElement(doc, "total_products_wt", QString::number(zamowienie.total_products_wt)));
+    order.appendChild(buildXMLElement(doc, "total_shipping", QString::number(zamowienie.total_shipping)));
+    order.appendChild(buildXMLElement(doc, "carrier_tax_rate", QString::number(zamowienie.carrier_tax_rate)));
+    order.appendChild(buildXMLElement(doc, "total_wrapping", QString::number(zamowienie.total_wrapping)));
+    order.appendChild(buildXMLElement(doc, "shipping_number", QString::number(zamowienie.shipping_number)));
+    order.appendChild(buildXMLElement(doc, "conversion_rate", QString::number(zamowienie.conversion_rate)));
+    return doc;
+}
+
+Zamowienie Presta::zamowienie(uint id)
+{
+    try {
+        PSWebService::Options opt;
+        opt.resource = "orders";
+        opt.id = id;
+        QDomDocument doc = mPSWebService->syncGet(opt);
+        Zamowienie order = zamowienie(doc);
+        return order;
+    } catch (PSWebService::PrestaError e) {
+        e.msg = "zamowienie(uint id)";
+        emit error(e);
+        throw e;
+    } catch (PSWebService::OtherError e) {
+        e.msg = "zamowienie(uint id)";
+        emit error(e);
+        throw e;
+    }
+}
+
+QList<Zamowienie> Presta::zamowienie(QString filter)
+{
+    try {
+        PSWebService::Options opt;
+        opt.resource = "orders";
+        opt.filter["id"] = filter;
+        QDomDocument doc = mPSWebService->syncGet(opt);
+
+        QList<Zamowienie> zamowienia;
+
+        QDomElement prestashop = doc.firstChildElement("prestashop");
+        if(!prestashop.isNull()) {
+            QDomNodeList orders = prestashop.firstChildElement("orders").elementsByTagName("order");
+            for(int i=0; i<orders.size(); ++i) {
+                uint id = orders.at(i).toElement().attribute("id").toUInt();
+                zamowienia << zamowienie(id);
+            }
+            return zamowienia;
+        } else {
+            throw QString("chujnia");
+        }
+    } catch (PSWebService::PrestaError e) {
+        e.msg = "zamowienie(QString filter)";
+        emit error(e);
+        throw e;
+    } catch (PSWebService::OtherError e) {
+        e.msg = "zamowienie(QString filter)";
+        emit error(e);
+        throw e;
+    }
+}
+

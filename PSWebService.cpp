@@ -28,41 +28,41 @@ QNetworkReply *PSWebService::get(const Options &options)
     //} else {
     QUrl url;
     if(options.id > 0) {
-        url = QUrl(mUrl + "/api/" + options.resource.c_str() + "/" + QString::number(options.id));
+        url = QUrl(mUrl + "/api/" + options.resource + "/" + QString::number(options.id));
     } else {
-        url = QUrl(mUrl + "/api/" + options.resource.c_str());
+        url = QUrl(mUrl + "/api/" + options.resource);
     }
-    QMapIterator<std::string, std::string> it(options.filter);
+    QMapIterator<QString, QString> it(options.filter);
     while(it.hasNext()) {
         it.next();
-        url.addQueryItem( QString("filter[").append(it.key().c_str()).append("]"), QString(it.value().c_str() ) );
+        url.addQueryItem( QString("filter[").append(it.key()).append("]"), it.value() );
     }
-    if(!options.display.empty()) {
-        url.addQueryItem( "display", QString(options.display.c_str() ));
+    if(!options.display.isEmpty()) {
+        url.addQueryItem( "display", options.display);
     }
-    if(!options.sort.empty()) {
-        url.addQueryItem( "sort", QString(options.sort.c_str() ));
+    if(!options.sort.isEmpty()) {
+        url.addQueryItem( "sort", options.sort);
     }
     // tworzymy zapytanie GET
     return mManager->get( QNetworkRequest( url ) );
     //}
 }
 
-QDomDocument *PSWebService::syncGet(const Options &options)
+QDomDocument PSWebService::syncGet(const Options &options)
 {
     return readReply(syncReply(get(options)));
 }
 
 QNetworkReply *PSWebService::post(const Options &options, const QDomDocument &xml)
 {
-    QNetworkRequest req(QUrl(mUrl + "/api/" + options.resource.c_str()));
+    QNetworkRequest req(QUrl(mUrl + "/api/" + options.resource));
     req.setHeader(QNetworkRequest::ContentTypeHeader,QVariant("application/x-www-form-urlencoded"));
     QUrl params;
     params.addQueryItem("xml", xml.toString());
     return mManager->post(req, params.encodedQuery());
 }
 
-QDomDocument* PSWebService::syncPost(const Options& options, const QDomDocument &xml)
+QDomDocument PSWebService::syncPost(const Options& options, const QDomDocument &xml)
 {
     return readReply(syncReply(post(options, xml)));
 }
@@ -72,13 +72,13 @@ QNetworkReply *PSWebService::put(const Options &options, const QDomDocument &xml
     //if(options.resource.empty() || options.id < 0) {
     //    throw std::runtime_error("Podano z³e parametry.");
     //} else {
-    QUrl url(mUrl + "/api/" + options.resource.c_str() + "/" + QString::number(options.id));
+    QUrl url(mUrl + "/api/" + options.resource + "/" + QString::number(options.id));
 
     return mManager->put(QNetworkRequest(url), xml.toByteArray());
     //}
 }
 
-QDomDocument* PSWebService::syncPut(const Options& options, const QDomDocument &xml)
+QDomDocument PSWebService::syncPut(const Options& options, const QDomDocument &xml)
 {
     return readReply(syncReply(put(options, xml)));
 }
@@ -88,12 +88,12 @@ void PSWebService::authentication(QNetworkReply *reply, QAuthenticator *authenti
     authenticator->setUser(mKey);
 }
 
-QDomDocument *PSWebService::readReply(QNetworkReply *reply) {
+QDomDocument PSWebService::readReply(QNetworkReply *reply) {
     QByteArray read = reply->readAll();
     QNetworkReply::NetworkError error = reply->error();
     reply->deleteLater();
-    QDomDocument* doc = new QDomDocument();
-    bool parsed = doc->setContent(read);
+    QDomDocument doc;
+    bool parsed = doc.setContent(read);
     // pomyœlnie odebrano XML
     if(error == QNetworkReply::NoError && parsed) {
         return doc;
@@ -101,21 +101,25 @@ QDomDocument *PSWebService::readReply(QNetworkReply *reply) {
     // wyst¹pi³ b³¹d i zwrócony zosta³ komunikat b³êdu w XML
     else if(parsed) {
         PrestaError exception(error);
-        QDomElement prestashop = doc->firstChildElement("prestashop");
+        exception.url = reply->url();
+        QDomElement prestashop = doc.firstChildElement("prestashop");
         QDomElement errorsElem = prestashop.firstChildElement("errors");
         QDomNodeList errorList = errorsElem.elementsByTagName("error");
         for(int i=0; i<errorList.size(); ++i) {
             QPair<unsigned, QString> pair;
             pair.first = errorList.at(i).firstChildElement("code").firstChild().toCDATASection().nodeValue().toInt();
             pair.second = errorList.at(i).firstChildElement("message").firstChild().toCDATASection().nodeValue();
+            exception.msgs << pair;
         }
-        delete doc;
         throw exception;
     }
     // nie uda³o siê sparsowaæ odpowiedzi XML
     else {
-        delete doc;
-        throw OtherError(error, "Wyst¹pi³ b³¹d parsowania odpowiedzi XML [url:"+reply->url().toString()+"]");
+        OtherError exception;
+        exception.code = error;
+        exception.url = reply->url();
+        exception.msg = QString(read);
+        throw exception;
     }
 }
 

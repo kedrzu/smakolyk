@@ -7,6 +7,7 @@
 #include <QMap>
 #include "Kategoria.h"
 #include "Produkt.h"
+#include "Zamowienie.h"
 #include "KCFirma.h"
 
 /*!
@@ -19,139 +20,192 @@ class Presta : public QObject
     Q_OBJECT
 public:
     /*!
-     \brief Rodzaj b³êdu przy uploadzie produktu
+     \brief Rodzaj bÅ‚Ä™du przy uploadzie produktu
 
      \enum ProduktError
     */
     enum ProduktError {
-        ADD_ERROR,  /*!< Nie uda³o siê dodaæ produktu */
-        EDIT_ERROR, /*!< Nie uda³o siê edytowaæ produktu */
-        KATEGORIA /*!< Nie uda³o siê uploadowaæ kategorii do której nale¿y produkt */
+        ADD_ERROR,  /*!< Nie udaÅ‚o siÄ™ dodaÄ‡ produktu */
+        EDIT_ERROR, /*!< Nie udaÅ‚o siÄ™ edytowaÄ‡ produktu */
+        KATEGORIA /*!< Nie udaÅ‚o siÄ™ uploadowaÄ‡ kategorii do ktÃ³rej naleÅ¼y produkt */
     };
 
     Presta(const Config &config, PSWebService* pswebService, KCFirma* kcFirma, QObject *parent = 0);
-    QDomDocument* toXML(const Produkt& produkt);
-    void syncEdit(const Produkt& produkt);
-    unsigned syncAdd(const Produkt& produkt);
-    QDomDocument* toXML(const Kategoria& kategoria);
-    void syncEdit(const Kategoria& kategoria);
-    unsigned syncAdd(const Kategoria& kategoria);
     /*!
-     \brief Zwraca bufor produktów do uploadu.
+     \brief Å»Ä…danie pobrania listy kategorii z Prestashop.
 
-     \fn produkty
-     \return QMap<unsigned, Produkt>
-    */
-    QMap<unsigned, Produkt>& produkty() { return mProdukty;}
-    /*!
-     \brief Zwraca produkt z bufora uploadu.
-
-     \fn produkty
-     \param i Id produktu w KC-Firmie
-     \return Produkt
-    */
-    Produkt &produkty(unsigned i) { return mProdukty[i];}
-    /*!
-     \brief Zwraca, czy upload zosta³ zakoñczony.
-
-     \fn isFinished
-     \return bool
-    */
-    bool isFinished() const { return mFinished; }
-    /*!
-     \brief ¯¹danie pobrania listy kategorii z Prestashop.
-
-     \fn aktualizujKategorie
     */
     void aktualizujKategorie();
     /*!
-     \brief Zwraca listê produktów, których nie uda³o siê uploadowaæ wraz z rodzajem b³êdu.
+     \brief Zwraca bufor produktÃ³w do uploadu.
 
-     \fn produktyBledy
-     \return const QMap<unsigned, ProduktError>&
+     \return QMap<unsigned, Produkt>
     */
-    const QMap<unsigned, ProduktError>& produktyBledy() { return mProduktyError; }
+    QMap<unsigned, Produkt>& buforProduktow() { return mProdukty;}
     /*!
-     \brief Dodaje do bufora uploadu produkty w liczbie okreœlonej w ustawieniach.
+     \brief Zwraca produkt z bufora uploadu.
 
-     \fn dodajProdukty
+     \param i Id produktu w KC-Firmie
+     \return Produkt
+    */
+    Produkt &buforProduktow(unsigned i) { return mProdukty[i];}
+    /*!
+     \brief Dodaje do bufora uploadu produkty w liczbie okreÅ›lonej w ustawieniach.
+
      \return bool
     */
     bool dodajProdukty();
     /*!
-     \brief Dodaje do bufora uploadu produkty w liczbie okreœlonej w parametrze
+     \brief Dodaje do bufora uploadu produkty w liczbie okreÅ›lonej w parametrze
 
-     \fn dodajProdukty
-     \param ile Ile produktów dodaæ do bufora
+     \param ile Ile produktÃ³w dodaÄ‡ do bufora
      \return bool
     */
     bool dodajProdukty(uint ile);
+    /*!
+     \brief Zwraca, czy upload zostaÅ‚ zakoÅ„czony.
+
+     \return bool
+    */
+    bool isFinished() const { return mFinished; }
+    /*!
+     \brief Zwraca listÄ™ produktÃ³w, ktÃ³rych nie udaÅ‚o siÄ™ uploadowaÄ‡ wraz z rodzajem bÅ‚Ä™du.
+
+     \return const QMap<unsigned, ProduktError>&
+    */
+    const QMap<unsigned, ProduktError>& produktyBledy() { return mProduktyError; }
+    /*!
+     \brief Synchroniczne dodawanie produktu w Presta.
+
+     \param produkt
+     \return unsigned
+    */
+    unsigned syncAdd(const Produkt& produkt);
+    /*!
+     \brief Synchroniczne dodawanie kategorii.
+
+     \param kategoria
+     \return unsigned
+    */
+    unsigned syncAdd(const Kategoria& kategoria);
+    /*!
+     \brief Synchroniczna edycja produktu w Presta
+
+     \param produkt
+    */
+    void syncEdit(const Produkt& produkt);
+    /*!
+     \brief Synchroniczna edycja kategorii.
+
+     \param kategoria
+    */
+    void syncEdit(const Kategoria& kategoria);
+    /*!
+     \brief Synchroniczna edycja zamÃ³wienia.
+
+     \param zamowienie
+    */
+    void syncEdit(const Zamowienie& zamowienie);
+    /*!
+     \brief Zamienia produkt na postaÄ‡ XML
+
+     \param produkt
+     \return QDomDocument
+    */
+    QDomDocument toXML(const Produkt& produkt);
+    /*!
+     \brief Zamienia kategoriÄ™ na postaÄ‡ XML
+
+     \param kategoria
+     \return QDomDocument
+    */
+    QDomDocument toXML(const Kategoria& kategoria);
+    /*!
+     \brief Zamienia zamÃ³wienie na postaÄ‡ XML
+
+     \param zamowienie
+     \return QDomDocument
+    */
+    QDomDocument toXML(const Zamowienie& zamowienie);
+    /*!
+     \brief PrzeksztaÅ‚ca XML do zamÃ³wienia.
+
+     \param doc
+     \return Zamowienie
+    */
+    Zamowienie zamowienie(QDomDocument& doc) const;
+    /*!
+     \brief Pobiera z Presta zamÃ³wienie o podanym ID.
+
+     \param id
+     \return Zamowienie
+    */
+    Zamowienie zamowienie(uint id);
+    /*!
+     \brief Pobiera z presta zamÃ³wienia wedÅ‚ug podanego filtra.
+
+     \param filter
+     \return QList<Zamowienie>
+    */
+    QList<Zamowienie> zamowienie(QString filter);
+
 
 signals:
     /*!
-     \brief ¯¹danie aktualizacji powi¹zania produktu
+     \brief Å»Ä…danie aktualizacji powiÄ…zania produktu
 
-     \fn zmianaProduktu
      \param id Id produktu w Presta
      \param idKC Id produktu w KC-Firmie
-     \param cena Cena produktu w sprzeda¿y przez internet
+     \param cena Cena produktu w sprzedaÅ¼y przez internet
     */
     void zmianaProduktu(unsigned id, unsigned idKC, float cena);
     /*!
-     \brief ¯¹danie aktualizacji powi¹zania kategorii
+     \brief Å»Ä…danie aktualizacji powiÄ…zania kategorii
 
-     \fn zmianaKategorii
      \param id Id kategorii w Presta
      \param idKC Id kategorii w KC-Firmie
     */
     void zmianaKategorii(unsigned id, unsigned idKC);
     /*!
-     \brief Sygna³ emitowany w momencia zakoñczenia uploadu.
+     \brief SygnaÅ‚ emitowany w momencia zakoÅ„czenia uploadu.
 
-     \fn uploadFinished
     */
     void uploadFinished();
     /*!
-     \brief Wyst¹pienie b³êdu komunikacji z Presta z odpowiednimi danymi.
+     \brief WystÄ…pienie bÅ‚Ä™du komunikacji z Presta z odpowiednimi danymi.
 
-     \fn error
      \param err
     */
     void error(PSWebService::PrestaError err);
     /*!
-     \brief Wyst¹pienie innego b³êdu (nie z Presta)
+     \brief WystÄ…pienie innego bÅ‚Ä™du (nie z Presta)
 
-     \fn error
      \param err
     */
     void error(PSWebService::OtherError err);
     /*!
      \brief Informacja do debugu programu.
 
-     \fn debug
      \param msg
     */
     void debug(QString msg);
     /*!
-     \brief Ostrze¿enie o problemach w dzia³aniu programu
+     \brief OstrzeÅ¼enie o problemach w dziaÅ‚aniu programu
 
-     \fn warning
      \param msg
     */
     void warning(QString msg);
     /*!
-     \brief Powiadomienie o dzia³aniu programu.
+     \brief Powiadomienie o dziaÅ‚aniu programu.
 
-     \fn notice
      \param msg
     */
     void notice(QString msg);
 
 public slots:
     /*!
-     \brief Wywo³anie slotu powoduje uploadowanie produktów w buforze
+     \brief WywoÅ‚anie slotu powoduje uploadowanie produktÃ³w w buforze
 
-     \fn upload
     */
     void upload();
 
@@ -162,14 +216,14 @@ protected slots:
     void categoryEdited();
     
 protected:
-    static QDomElement buildXMLElement(QDomDocument *doc, const QString &name, const QString &value);
-    static QDomElement buildXMLElement(QDomDocument *doc, const QString &name, const QString &value, int lang);
-    static QDomDocument* getPrestaXML();
     void edit(const Produkt& produkt);
     void add(const Produkt& produkt);
     void edit(const Kategoria& kategoria);
     void add(const Kategoria& kategoria);
     void checkFinished();
+    static QDomElement buildXMLElement(QDomDocument &doc, const QString &name, const QString &value);
+    static QDomElement buildXMLElement(QDomDocument &doc, const QString &name, const QString &value, int lang);
+    static QDomDocument getPrestaXML();
 
     PSWebService *mPSWebService;
     KCFirma *mKCFirma;

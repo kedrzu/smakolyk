@@ -20,18 +20,20 @@ class PSWebService : public QObject
 
 public:
     struct Options {
-        std::string resource;
+        QString resource;
         int id;
-        QMap<std::string, std::string> filter;
-        std::string display;
-        std::string sort;
+        QMap<QString, QString> filter;
+        QString display;
+        QString sort;
         int limit;
         Options() : id(-1), limit(-1) {}
     };
 
     struct PrestaError {
         QNetworkReply::NetworkError code;
+        QUrl url;
         QVector<QPair<unsigned, QString> > msgs;
+        QString msg;
         PrestaError(const QNetworkReply::NetworkError& code)
             : code(code) {}
         PrestaError() {}
@@ -39,9 +41,11 @@ public:
 
     struct OtherError {
         QNetworkReply::NetworkError code;
+        QUrl url;
         QString msg;
-        OtherError(QNetworkReply::NetworkError code, QString msg) :
-            code(code), msg(msg) {}
+        OtherError(QNetworkReply::NetworkError code, const QUrl& url, QString msg) :
+            code(code), url(url), msg(msg) {}
+        OtherError() {}
     };
 
     PSWebService(const Config &config);
@@ -49,10 +53,10 @@ public:
     QNetworkReply *get(const Options& options);
     QNetworkReply *post(const Options &options, const QDomDocument& xml);
     QNetworkReply *put(const Options &options, const QDomDocument& xml);
-    QDomDocument *syncGet(const Options& options);
-    QDomDocument *syncPost(const Options &options, const QDomDocument& xml);
-    QDomDocument *syncPut(const Options & options, const QDomDocument& xml);
-    static QDomDocument *readReply(QNetworkReply* reply);
+    QDomDocument syncGet(const Options& options);
+    QDomDocument syncPost(const Options &options, const QDomDocument& xml);
+    QDomDocument syncPut(const Options & options, const QDomDocument& xml);
+    static QDomDocument readReply(QNetworkReply* reply);
     static QNetworkReply *syncReply(QNetworkReply* reply);
 
 public slots:

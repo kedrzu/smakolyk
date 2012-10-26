@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include "Presta.h"
+#include "PSWebService.h"
 
 class Logger : public QObject
 {
@@ -13,7 +14,8 @@ public:
 signals:
     
 public slots:
-    void logError(QNetworkReply::NetworkError code, QByteArray msg);
+    void logError(PSWebService::PrestaError e);
+    void logError(PSWebService::OtherError e);
 
 protected:
     Presta* mPresta;

@@ -1,7 +1,7 @@
 #include "Produkt.h"
 
-unsigned Produkt::getId(QDomDocument *doc) {
-    QDomElement prestashop = doc->firstChildElement("prestashop");
+unsigned Produkt::getId(QDomDocument &doc) {
+    QDomElement prestashop = doc.firstChildElement("prestashop");
     if(!prestashop.isNull()) {
         QDomElement product = prestashop.firstChildElement("product");
         if(!product.isNull()) {
@@ -10,8 +10,8 @@ unsigned Produkt::getId(QDomDocument *doc) {
     } else return 0;
 }
 
-float Produkt::getCena(QDomDocument *doc) {
-    QDomElement prestashop = doc->firstChildElement("prestashop");
+float Produkt::getCena(QDomDocument &doc) {
+    QDomElement prestashop = doc.firstChildElement("prestashop");
     if(!prestashop.isNull()) {
         QDomElement product = prestashop.firstChildElement("product");
         if(!product.isNull()) {

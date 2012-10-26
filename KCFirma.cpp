@@ -1,7 +1,7 @@
 #include "KCFirma.h"
 #include <QDebug>
 
-KCFirma::KCFirma(Config & config, QObject *parent) :
+KCFirma::KCFirma(Config &config, QObject *parent) :
     QObject(parent)
 {
 }
@@ -17,4 +17,9 @@ void KCFirma::zmianaKategorii(unsigned id, unsigned idKC) {
 
 void KCFirma::zmianaProduktu(unsigned id, unsigned idKC, float cena) {
     qDebug() << "zmiana produktu \tid=" << id << "\tidKC=" << idKC << "\tcena=" << cena;
+}
+
+bool KCFirma::produkty(QMap<unsigned, Produkt> &produktyMapa, unsigned ilosc)
+{
+    return true;
 }

@@ -31,7 +31,7 @@ struct Kategoria {
     QString przyjaznyUrl; /*!< [DODAJ][EDYTUJ] Nazwê przerób na ma³e litery i zamiast spacji daj myœlniki. */
     QString opis; /*!< Olej. */
 
-    static unsigned getId(QDomDocument* doc);
+    static unsigned getId(QDomDocument& doc);
 /*!
  \brief
 
