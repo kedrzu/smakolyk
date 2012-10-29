@@ -10,7 +10,7 @@ int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
     Config config;
-    config.url = "http://localhost/PrestaShop.PL_1.4.4.1-stable/";
+    config.url = "http://localhost/prestashop";
     config.key = "DFHHPRHFWBQ47F55373EUA25FB9QXEFL";
     config.lang = 6;
 
@@ -33,29 +33,43 @@ int main(int argc, char *argv[])
     //        }
     //    }
 
-    QList<Zamowienie> zamowienia = presta->getZamowienie(">=[1]");
-    for(int i=0; i<zamowienia.size(); ++i) {
-        const Zamowienie& zamowienie = zamowienia.at(i);
-        qDebug() << "";
-        qDebug() << "zamowienie nr " << zamowienie.id;
-        qDebug() << "data dodania " << zamowienie.date_add;
-        qDebug() << "produkty:";
-        for(int i=0; i<zamowienie.produkty.size(); ++i) {
-            qDebug() << " - id: " << zamowienie.produkty.at(i).id << " ilosc: " << zamowienie.produkty.at(i).ilosc << "cena :" << zamowienie.produkty.at(i).cena;
-        }
-    }
+//    QList<Zamowienie> zamowienia = presta->getZamowienie(">=[1]");
+//    for(int i=0; i<zamowienia.size(); ++i) {
+//        const Zamowienie& zamowienie = zamowienia.at(i);
+//        qDebug() << "";
+//        qDebug() << "zamowienie nr " << zamowienie.id;
+//        qDebug() << "data dodania " << zamowienie.date_add;
+//        qDebug() << "produkty:";
+//        for(int i=0; i<zamowienie.produkty.size(); ++i) {
+//            qDebug() << " - id: " << zamowienie.produkty.at(i).id << " ilosc: " << zamowienie.produkty.at(i).ilosc << "cena :" << zamowienie.produkty.at(i).cena;
+//        }
+//    }
 
-    Zamowienie zamowienie = presta->getZamowienie(2);
-    zamowienie.total_products = 1000;
-    zamowienie.gift = 1;
-    zamowienie.status = Zamowienie::BEZ_ZMIAN;
+    //    Zamowienie zamowienie = presta->getZamowienie(2);
+    //    zamowienie.total_products = 1000;
+    //    zamowienie.gift = 1;
+    //    zamowienie.status = Zamowienie::BEZ_ZMIAN;
+    //    try {
+    //        presta->syncEdit(zamowienie);
+    //    } catch (PSWebService::PrestaError e) {
+    //        logger->logError(e);
+    //    } catch (PSWebService::OtherError e) {
+    //        logger->logError(e);
+    //    }
+
+    SpecificPrice sp;
+    sp.id_product = 10;
+    sp.price = 100;
+    sp.reduction_type = SpecificPrice::AMOUNT;
+    sp.reduction = 50;
     try {
-        presta->syncEdit(zamowienie);
+        presta->syncAdd(sp);
     } catch (PSWebService::PrestaError e) {
         logger->logError(e);
     } catch (PSWebService::OtherError e) {
         logger->logError(e);
     }
+
 
 
     return a.exec();

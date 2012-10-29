@@ -45,7 +45,7 @@ QDomDocument Presta::toXML(const Produkt &produkt) {
 
     if(produkt.id > 0)
         product.appendChild(buildXMLElement(doc, "id",  QString::number(produkt.id)));
-    product.appendChild(buildXMLElement(doc, "price", QString::number(produkt.cena)));
+    product.appendChild(buildXMLElement(doc, "price", QString::number(produkt.cenaPresta)));
     product.appendChild(buildXMLElement(doc, "out_of_stock", QString::number(produkt.outOfStock)));
     product.appendChild(buildXMLElement(doc, "quantity", QString::number(produkt.ilosc)));
     product.appendChild(buildXMLElement(doc, "ean13", produkt.ean));
@@ -171,6 +171,25 @@ void Presta::add(const Kategoria &kategoria) {
     connect(reply, SIGNAL(finished()), this, SLOT(categoryAdded()), Qt::QueuedConnection);
 }
 
+void Presta::edit(const SpecificPrice &specificPrice) {
+    QDomDocument doc = toXML(specificPrice);
+    PSWebService::Options opt;
+    opt.id = specificPrice.id;
+    opt.resource = "specific_prices";
+    QNetworkReply* reply = mPSWebService->put(opt, doc);
+    reply->setProperty("id_product", QVariant(specificPrice.id_product));
+    connect(reply, SIGNAL(finished()), this, SLOT(specificPriceEdited()), Qt::QueuedConnection);
+}
+
+void Presta::add(const SpecificPrice &specificPrice) {
+    QDomDocument doc = toXML(specificPrice);
+    PSWebService::Options opt;
+    opt.resource = "specific_prices";
+    QNetworkReply* reply = mPSWebService->post(opt, doc);
+    reply->setProperty("id_product", QVariant(specificPrice.id_product));
+    connect(reply, SIGNAL(finished()), this, SLOT(specificPriceAdded()), Qt::QueuedConnection);
+}
+
 void Presta::syncEdit(const Kategoria &kategoria) {
     QDomDocument doc = toXML(kategoria);
     PSWebService::Options opt;
@@ -187,14 +206,28 @@ void Presta::syncEdit(const Zamowienie &zamowienie) {
     QDomDocument result = mPSWebService->syncPut(opt, doc);
 }
 
+void Presta::syncEdit(const SpecificPrice &specificPrice) {
+    QDomDocument doc = toXML(specificPrice);
+    PSWebService::Options opt;
+    opt.id = specificPrice.id;
+    opt.resource = "specific_prices";
+    QDomDocument result = mPSWebService->syncPut(opt, doc);
+}
+
 unsigned Presta::syncAdd(const Kategoria &kategoria) {
     QDomDocument doc = toXML(kategoria);
-    qDebug() << doc.toByteArray();
     PSWebService::Options opt;
     opt.resource = "categories";
     QDomDocument result = mPSWebService->syncPost(opt, doc);
     unsigned id = Kategoria::getId(result);
     return id;
+}
+
+void Presta::syncAdd(const SpecificPrice &specificPrice) {
+    QDomDocument doc = toXML(specificPrice);
+    PSWebService::Options opt;
+    opt.resource = "specific_prices";
+    QDomDocument result = mPSWebService->syncPost(opt, doc);
 }
 
 void Presta::aktualizujKategorie()
@@ -356,6 +389,16 @@ void Presta::productEdited()
     checkFinished();
 }
 
+void Presta::specificPriceEdited()
+{
+
+}
+
+void Presta::specificPriceAdded()
+{
+
+}
+
 void Presta::checkFinished() {
     if(mProduktyError.size() == mProdukty.size()) {
         mFinished = true;
@@ -469,6 +512,35 @@ QDomDocument Presta::toXML(const Zamowienie &zamowienie)
     return doc;
 }
 
+QDomDocument Presta::toXML(const SpecificPrice &specificPrice)
+{
+    QDomDocument doc = getPrestaXML();
+    QDomElement specific_price = doc.createElement("specific_price");
+    doc.firstChild().appendChild(specific_price);
+
+    if(specificPrice.id > 0)
+        specific_price.appendChild(buildXMLElement(doc, "id",  QString::number(specificPrice.id)));
+
+    specific_price.appendChild(buildXMLElement(doc, "id_product", QString::number(specificPrice.id_product)));
+    specific_price.appendChild(buildXMLElement(doc, "id_shop", QString::number(specificPrice.id_shop)));
+    specific_price.appendChild(buildXMLElement(doc, "id_cart", QString::number(specificPrice.id_cart)));
+    specific_price.appendChild(buildXMLElement(doc, "id_country", QString::number(specificPrice.id_country)));
+    specific_price.appendChild(buildXMLElement(doc, "id_currency", QString::number(specificPrice.id_currency)));
+    specific_price.appendChild(buildXMLElement(doc, "id_customer", QString::number(specificPrice.id_customer)));
+    specific_price.appendChild(buildXMLElement(doc, "id_group", QString::number(specificPrice.id_group)));
+    specific_price.appendChild(buildXMLElement(doc, "price", QString::number(specificPrice.price)));
+    specific_price.appendChild(buildXMLElement(doc, "reduction", QString::number(specificPrice.reduction)));
+    specific_price.appendChild(buildXMLElement(doc, "from_quantity", QString::number(specificPrice.from_quantity)));
+    specific_price.appendChild(buildXMLElement(doc, "from", specificPrice.from));
+    specific_price.appendChild(buildXMLElement(doc, "to", specificPrice.to));
+    switch(specificPrice.reduction_type) {
+    case SpecificPrice::PERCENTAGE: specific_price.appendChild(buildXMLElement(doc, "reduction_type", "percentage"));
+    case SpecificPrice::AMOUNT: specific_price.appendChild(buildXMLElement(doc, "reduction_type", "amount"));
+    }
+    qDebug() << doc.toByteArray();
+    return doc;
+}
+
 Zamowienie Presta::getZamowienie(uint id)
 {
     try {
@@ -489,12 +561,12 @@ Zamowienie Presta::getZamowienie(uint id)
     }
 }
 
-QList<Zamowienie> Presta::getZamowienie(QString filter)
+QList<Zamowienie> Presta::getZamowienie(Zamowienie::Status status)
 {
     try {
         PSWebService::Options opt;
         opt.resource = "orders";
-        opt.filter["id"] = filter;
+        opt.filter["current_state"] = "[" + QString::number((uint)status)+ "]";
         QDomDocument doc = mPSWebService->syncGet(opt);
 
         QList<Zamowienie> zamowienia;
@@ -509,15 +581,26 @@ QList<Zamowienie> Presta::getZamowienie(QString filter)
             return zamowienia;
         } else {
             throw QString("chujnia");
+            // TODO sygnalizacja b³êdu
         }
     } catch (PSWebService::PrestaError e) {
-        e.msg = "zamowienie(QString filter)";
+        e.msg = "getZamowienie(QString filter)";
         emit error(e);
         throw e;
     } catch (PSWebService::OtherError e) {
-        e.msg = "zamowienie(QString filter)";
+        e.msg = "getZamowienie(QString filter)";
         emit error(e);
         throw e;
     }
+}
+
+SpecificPrice Presta::getSpecificPrice(const Produkt& product)
+{
+    SpecificPrice sp;
+    sp.id_product = product.id;
+    sp.reduction_type = SpecificPrice::AMOUNT;
+    sp.price = product.cenaKC;
+    // TODO zrobiæ sygnalizacjê b³êdu je¿eli cenaPresta > cenaKC
+    sp.reduction = product.cenaKC - product.cenaPresta;
 }
 

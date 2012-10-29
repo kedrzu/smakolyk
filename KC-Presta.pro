@@ -22,7 +22,8 @@ SOURCES += main.cpp \
     Produkt.cpp \
     Kategoria.cpp \
     Config.cpp \
-    Zamowienie.cpp
+    Zamowienie.cpp \
+    SpecificPrice.cpp
 
 HEADERS += \
     PSWebService.h \
@@ -32,4 +33,5 @@ HEADERS += \
     Logger.h \
     KCFirma.h \
     Config.h \
-    Zamowienie.h
+    Zamowienie.h \
+    SpecificPrice.h

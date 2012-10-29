@@ -24,7 +24,8 @@ struct Produkt {
     Status status; /*!< [DODAJ][EDYTUJ] Czy produkt jest aktywny, czy nie. */
     uint id; /*!< [EDYTUJ] Id produktu w Prestashop. */
     uint idKC; /*!< [DODAJ][EDYTUJ] Id produktu w KC-Firma. */
-    float cena; /*!< [DODAJ][EDYTUJ] */
+    float cenaPresta; /*!< [DODAJ][EDYTUJ] */
+    float cenaKC; /*!< [DODAJ][EDYTUJ] */
     uint kategoria; /*!< [EDYTUJ] Numer grupy w Prestashop  */
     uint kategoriaKC; /*!< [DODAJ][EDYTUJ] Numer grupy w KC-Firma */
     QString nazwa; /*!< [DODAJ][EDYTUJ] Nazwa produktu */
@@ -48,7 +49,7 @@ struct Produkt {
 
  \fn Produkt
 */
-    Produkt() : status(USUN), id(0), idKC(0), cena(0), outOfStock(2), ilosc(0), kategoria(0), kategoriaKC(0) {}
+    Produkt() : status(USUN), id(0), idKC(0), cenaPresta(0), outOfStock(2), ilosc(0), kategoria(0), kategoriaKC(0) {}
 };
 
 #endif // PRODUKT_H
