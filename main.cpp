@@ -1,5 +1,5 @@
 #include <QtCore/QCoreApplication>
-#include "Presta.h"
+#include "KCPresta.h"
 #include "KCFirma.h"
 #include "Logger.h"
 #include <iostream>
@@ -16,8 +16,9 @@ int main(int argc, char *argv[])
 
     PSWebService* webService = new PSWebService(config);
     KCFirma* kcfirma = new KCFirma(config);
-    Presta* presta = new Presta(config, webService, kcfirma);
-    Logger* logger = new Logger(presta);
+    Presta::Prestashop* presta = new Presta::Prestashop(config, webService);
+    KCPresta* kcpresta = new KCPresta(config, webService, kcfirma);
+    Logger* logger = new Logger(kcpresta);
 
     //    for(int j=1; j<5; ++j) {
     //        try {
@@ -57,10 +58,10 @@ int main(int argc, char *argv[])
     //        logger->logError(e);
     //    }
 
-    SpecificPrice sp;
+    Presta::SpecificPrice sp;
     sp.id_product = 10;
     sp.price = 100;
-    sp.reduction_type = SpecificPrice::AMOUNT;
+    sp.reduction_type = Presta::SpecificPrice::AMOUNT;
     sp.reduction = 50;
     try {
         presta->syncAdd(sp);

@@ -2,14 +2,13 @@
 #define LOGGER_H
 
 #include <QObject>
-#include "Presta.h"
-#include "PSWebService.h"
+#include "KCPresta.h"
 
 class Logger : public QObject
 {
     Q_OBJECT
 public:
-    explicit Logger(Presta* presta, QObject *parent = 0);
+    explicit Logger(KCPresta* presta, QObject *parent = 0);
     
 signals:
     
@@ -18,7 +17,7 @@ public slots:
     void logError(PSWebService::OtherError e);
 
 protected:
-    Presta* mPresta;
+    KCPresta* mPresta;
 };
 
 #endif // LOGGER_H

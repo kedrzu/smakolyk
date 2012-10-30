@@ -23,7 +23,8 @@ SOURCES += main.cpp \
     Kategoria.cpp \
     Config.cpp \
     Zamowienie.cpp \
-    SpecificPrice.cpp
+    KCPresta.cpp \
+    PrestaStructs.cpp
 
 HEADERS += \
     PSWebService.h \
@@ -34,4 +35,5 @@ HEADERS += \
     KCFirma.h \
     Config.h \
     Zamowienie.h \
-    SpecificPrice.h
+    KCPresta.h \
+    PrestaStructs.h

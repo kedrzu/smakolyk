@@ -3,6 +3,7 @@
 
 #include <QString>
 #include <QDomDocument>
+#include <QList>
 
 /*!
  \brief
@@ -29,27 +30,16 @@ struct Produkt {
     uint kategoria; /*!< [EDYTUJ] Numer grupy w Prestashop  */
     uint kategoriaKC; /*!< [DODAJ][EDYTUJ] Numer grupy w KC-Firma */
     QString nazwa; /*!< [DODAJ][EDYTUJ] Nazwa produktu */
-    uint outOfStock; /*!< Zostaw domyœlne */
-    uint ilosc; /*!< Zostaw domyœlne */
-    QString metaOpis; /*!< Opis grupy do wyszukiwarki. Olej to. */
-    QString metaKeywords; /*!< S³owa kluczowe. Olej to. */
-    QString metaTytul; /*!< [DODAJ][EDYTUJ] Tytu³ do wyszukiwarki. Mo¿esz ustawiæ taki sam jak nazwa. */
-    QString przyjaznyUrl; /*!< [DODAJ][EDYTUJ] Nazwê przerób na ma³e litery i zamiast spacji daj myœlniki. */
-    QString dostepnyTeraz; /*!< Olej. */
-    QString dostepnyPozniej; /*!< Olej to. */
+    QString ean; /*!< [DODAJ][EDYTUJ] Kod kreskowy */
     QString opis; /*!< Olej to. */
     QString krotkiOpis; /*!< [DODAJ][EDYTUJ] Wpisz tutaj w³aœciwoœci typu gramatura itp. */
-    QString ean; /*!< [DODAJ][EDYTUJ] Kod kreskowy */
-
-    static unsigned getId(QDomDocument &doc);
-    static float getCena(QDomDocument &doc);
 
 /*!
  \brief
 
  \fn Produkt
 */
-    Produkt() : status(USUN), id(0), idKC(0), cenaPresta(0), outOfStock(2), ilosc(0), kategoria(0), kategoriaKC(0) {}
+    Produkt() : status(USUN), id(0), idKC(0), cenaPresta(0), kategoria(0), kategoriaKC(0) {}
 };
 
 #endif // PRODUKT_H

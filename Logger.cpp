@@ -2,7 +2,7 @@
 
 #include <QDebug>
 
-Logger::Logger(Presta *presta, QObject *parent) :
+Logger::Logger(KCPresta *presta, QObject *parent) :
     QObject(parent),
     mPresta(presta)
 {

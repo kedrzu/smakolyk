@@ -60,9 +60,6 @@ public:
      \return bool Zwraca, czy uda³o siê pobraæ dane z bazy.
     */
     bool produkty(QMap<unsigned, Produkt>& produktyMapa, unsigned ilosc);
-signals:
-    
-public slots:
     /*!
      \brief Zmieniony zosta³ produkt w Prestashop
 
