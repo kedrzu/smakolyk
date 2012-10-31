@@ -1,6 +1,7 @@
 #ifndef KCFIRMA_H
 #define KCFIRMA_H
 
+#include <QtSql/QtSql>
 #include <QObject>
 #include <QMap>
 #include "Kategoria.h"
@@ -91,7 +92,27 @@ public:
     */
     void zmianaKategorii(unsigned id, unsigned idKC);
 
+public:
+
+    enum blad {
+        BLAD_POLACZENIA_Z_BAZA,
+        BLAD_ZAPYTANIA_GRUPY
+    };
+
 protected:
+
+private:
+
+
+
+    QString mKCFirmaPath;
+    QSqlDatabase mKCFirmaDB;
+
+    QString mKCPosPath;
+    QSqlDatabase mKCPosDB;
+
+
+
 };
 
 #endif // KCFIRMA_H
