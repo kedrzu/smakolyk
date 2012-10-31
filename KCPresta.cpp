@@ -85,10 +85,11 @@ void KCPresta::upload() {
             // dodajemy kategoriê, je¿eli sie nie uda emitujemy blad i kontynujemy z nastepnym produktem
             try {
                 // kategoria dodawana jest synchronicznie
-                unsigned id = syncAdd(kat);
+                Category category = kc2presta(kat);
+                unsigned id = syncAdd(category);
                 // aktualizujemy powi¹zanie
                 emit zmianaKategorii(id, prod.kategoriaKC);
-                mKatNadrzedne[id] = kat.nadrzedna;
+                mKatNadrzedne[id] = category.id_parent;
             } catch (PSWebService::PrestaError e) {
                 emit error(e);
                 err = true;
@@ -246,10 +247,12 @@ void KCPresta::productAdded(QNetworkReply *reply)
         QDomDocument doc = PSWebService::readReply(reply);
         unsigned id = Product::getId(doc);
         // uploadujemy cenê specjaln¹ produktu
-        Presta::SpecificPrice sp = getSpecificPrice(mProdukty.value(idKC));
+        const Produkt& prod = mProdukty.value(idKC);
+        Presta::SpecificPrice sp = getSpecificPrice(prod);
         syncAdd(sp);
+        // TODO przechwytywanie wyj¹tków z bazy danych
+        mKCFirma->zmianaProduktu(id, idKC, prod.cenaPresta);
         mProdukty.remove(idKC);
-        mKCFirma->zmianaProduktu(id, idKC, cena);
     } catch (PSWebService::PrestaError e) {
         e.msg = "productAdded()";
         mProduktyError[idKC] = ADD_ERROR;
@@ -272,10 +275,22 @@ void KCPresta::productEdited(QNetworkReply *reply)
         QDomDocument doc = PSWebService::readReply(reply);
         unsigned id = Product::getId(doc);
         // uploadujemy cenê specjaln¹ produktu
-        Presta::SpecificPrice sp = getSpecificPrice(mProdukty.value(idKC));
-
+        const Produkt& prod = mProdukty.value(idKC);
+        Presta::SpecificPrice sp = getSpecificPrice(prod);
+        QList<uint> spList = Prestashop::getSpecificPrice(id);
+        // je¿eli produkt ma ju¿ zapisan¹ cenê specjaln¹ to nale¿y j¹ edytowaæ
+        if(spList.size() > 0) {
+            sp.id  = spList.at(0);
+            syncEdit(sp);
+            for(int i=1; i<spList.size(); ++i) {
+                // TODO usuwanie niepotrzebnych
+            }
+        } else {
+            syncAdd(sp);
+        }
+        // TODO przechwytywanie wyj¹tków z bazy danych
+        mKCFirma->zmianaProduktu(id, idKC, prod.cenaPresta);
         mProdukty.remove(idKC);
-        //emit zmianaProduktu(id, idKC, cena);
     } catch (PSWebService::PrestaError e) {
         e.msg = "productEdited()";
         mProduktyError[idKC] = EDIT_ERROR;
@@ -349,4 +364,17 @@ Presta::Product KCPresta::kc2presta(const Produkt &produkt)
     }
 
     return product;
+}
+
+Presta::Category KCPresta::kc2presta(const Kategoria &kategoria)
+{
+    Presta::Category category;
+    category.id = kategoria.id;
+    category.idRef = kategoria.idKC;
+    category.active = 1;
+    category.id_parent = 1;
+    category.name = kategoria.nazwa;
+    category.link_rewrite = kategoria.nazwa;
+    category.link_rewrite = category.link_rewrite.replace(" ", "-").toLower();
+    return category;
 }

@@ -38,3 +38,48 @@ SpecificPrice::SpecificPrice() :
     to("0000-00-00 00:00:00"),
     reduction_type(AMOUNT)
 {}
+
+Order::Order() :
+    id(0),
+    current_state(0),
+    id_address_delivery(0),
+    id_address_invoice(0),
+    id_cart(0),
+    id_currency(0),
+    id_lang(0),
+    id_customer(0),
+    id_carrier(0),
+    invoice_number(0),
+    delivery_number(0),
+    valid(0),
+    recyclable(0),
+    gift(0),
+    shipping_number(0),
+    total_discounts(0),
+    total_paid(0),
+    total_paid_real(0),
+    total_products(0),
+    total_products_wt(0),
+    total_shipping(0),
+    carrier_tax_rate(0),
+    total_wrapping(0),
+    conversion_rate(0)
+{}
+
+Category::Category() :
+    id(0),
+    idRef(0),
+    active(1),
+    id_parent(1)
+{}
+
+uint Category::getId(QDomDocument &doc) {
+    QDomElement prestashop = doc.firstChildElement("prestashop");
+    if(!prestashop.isNull()) {
+        QDomElement category = prestashop.firstChildElement("category");
+        if(!category.isNull()) {
+            return category.firstChildElement("id").toCDATASection().nodeValue().toUInt();
+        } else return 0;
+    } else return 0;
+}
+

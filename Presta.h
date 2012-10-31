@@ -22,10 +22,10 @@ class Prestashop : public QObject
 public:
     Prestashop(const Config &config, PSWebService* pswebService, QObject *parent = 0);
     QNetworkReply *add(const Product& product);
-    QNetworkReply *add(const Kategoria& kategoria);
+    QNetworkReply *add(const Category& kategoria);
     QNetworkReply *add(const SpecificPrice& specificPrice);
     QNetworkReply *edit(const Product& product);
-    QNetworkReply *edit(const Kategoria& kategoria);
+    QNetworkReply *edit(const Category& kategoria);
     QNetworkReply *edit(const SpecificPrice& specificPrice);
      /*!
      \brief Przeksztalca XML do zamowienia.
@@ -45,9 +45,9 @@ public:
      \brief Pobiera z presta zamowienia o podanym stanie.
 
      \param status
-     \return QList<Zamowienie>
+     \return QList<Order>
     */
-    QList<Order> getOrder(Order::Status status);
+    QList<Order> getOrders(uint state);
     QList<uint> getSpecificPrice(uint productId);
     /*!
      \brief Synchroniczne dodawanie produktu w Presta.
@@ -62,7 +62,7 @@ public:
      \param kategoria
      \return unsigned
     */
-    unsigned syncAdd(const Kategoria& kategoria);
+    unsigned syncAdd(const Category& kategoria);
     /*!
      \brief Synchroniczne dodawanie ceny specjalnej
 
@@ -81,7 +81,7 @@ public:
 
      \param kategoria
     */
-    void syncEdit(const Kategoria& kategoria);
+    void syncEdit(const Category& kategoria);
     /*!
      \brief Synchroniczna edycja zamowienia.
 
@@ -107,14 +107,14 @@ public:
      \param kategoria
      \return QDomDocument
     */
-    QDomDocument toXML(const Kategoria& kategoria);
+    QDomDocument toXML(const Category& category);
     /*!
      \brief Zamienia zamowienie na postac XML
 
      \param zamowienie
      \return QDomDocument
     */
-    QDomDocument toXML(const Order& zamowienie);
+    QDomDocument toXML(const Order& order);
     /*!
      \brief Zamienia cene specjalna na postac XML
 

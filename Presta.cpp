@@ -121,42 +121,42 @@ unsigned Prestashop::syncAdd(const Product &product) {
     return id;
 }
 
-QDomDocument Prestashop::toXML(const Kategoria &kategoria) {
+QDomDocument Prestashop::toXML(const Category &category) {
     QDomDocument doc = getPrestaXML();
-    QDomElement category = doc.createElement("category");
-    doc.firstChild().appendChild(category);
+    QDomElement categoryElem = doc.createElement("category");
+    doc.firstChild().appendChild(categoryElem);
 
-    if(kategoria.id > 0)
-        category.appendChild(buildXMLElement(doc, "id",  QString::number(kategoria.id)));
-    if(kategoria.nadrzedna > 0)
-        category.appendChild(buildXMLElement(doc, "id_parent",  QString::number(kategoria.nadrzedna)));
-    category.appendChild(buildXMLElement(doc, "active", kategoria.status > 0 ? "1" : "0"));
-    category.appendChild(buildXMLElement(doc, "name", kategoria.nazwa, mLangId));
-    category.appendChild(buildXMLElement(doc, "meta_description", kategoria.metaOpis, mLangId));
-    category.appendChild(buildXMLElement(doc, "meta_keywords", kategoria.metaKeywords, mLangId));
-    category.appendChild(buildXMLElement(doc, "meta_title", kategoria.metaTytul, mLangId));
-    category.appendChild(buildXMLElement(doc, "link_rewrite", kategoria.przyjaznyUrl, mLangId));
-    category.appendChild(buildXMLElement(doc, "description", kategoria.opis, mLangId));
+    if(category.id > 0)
+        categoryElem.appendChild(buildXMLElement(doc, "id",  QString::number(category.id)));
+    if(category.id_parent > 0)
+        categoryElem.appendChild(buildXMLElement(doc, "id_parent",  QString::number(category.id_parent)));
+    categoryElem.appendChild(buildXMLElement(doc, "active", QString::number(category.active)));
+    categoryElem.appendChild(buildXMLElement(doc, "name", category.name, mLangId));
+    categoryElem.appendChild(buildXMLElement(doc, "meta_description", category.meta_description, mLangId));
+    categoryElem.appendChild(buildXMLElement(doc, "meta_keywords", category.meta_keywords, mLangId));
+    categoryElem.appendChild(buildXMLElement(doc, "meta_title", category.meta_title, mLangId));
+    categoryElem.appendChild(buildXMLElement(doc, "link_rewrite", category.link_rewrite, mLangId));
+    categoryElem.appendChild(buildXMLElement(doc, "description", category.description, mLangId));
     return doc;
 }
 
-QNetworkReply *Prestashop::edit(const Kategoria &kategoria) {
+QNetworkReply *Prestashop::edit(const Category &kategoria) {
     QDomDocument doc = toXML(kategoria);
     PSWebService::Options opt;
     opt.id = kategoria.id;
     opt.resource = "categories";
     QNetworkReply* reply = mPSWebService->put(opt, doc);
-    reply->setProperty("idKC", QVariant(kategoria.idKC));
-return reply;
+    reply->setProperty("idRef", QVariant(kategoria.idRef));
+    return reply;
 }
 
-QNetworkReply *Prestashop::add(const Kategoria &kategoria) {
+QNetworkReply *Prestashop::add(const Category &kategoria) {
     QDomDocument doc = toXML(kategoria);
     PSWebService::Options opt;
     opt.resource = "categories";
     QNetworkReply* reply = mPSWebService->post(opt, doc);
-    reply->setProperty("idKC", QVariant(kategoria.idKC));
-return reply;
+    reply->setProperty("idRef", QVariant(kategoria.idRef));
+    return reply;
 }
 
 QNetworkReply *Prestashop::edit(const SpecificPrice &specificPrice) {
@@ -166,7 +166,7 @@ QNetworkReply *Prestashop::edit(const SpecificPrice &specificPrice) {
     opt.resource = "specific_prices";
     QNetworkReply* reply = mPSWebService->put(opt, doc);
     reply->setProperty("id_product", QVariant(specificPrice.id_product));
-return reply;
+    return reply;
 }
 
 QNetworkReply *Prestashop::add(const SpecificPrice &specificPrice) {
@@ -175,10 +175,10 @@ QNetworkReply *Prestashop::add(const SpecificPrice &specificPrice) {
     opt.resource = "specific_prices";
     QNetworkReply* reply = mPSWebService->post(opt, doc);
     reply->setProperty("id_product", QVariant(specificPrice.id_product));
-return reply;
+    return reply;
 }
 
-void Prestashop::syncEdit(const Kategoria &kategoria) {
+void Prestashop::syncEdit(const Category &kategoria) {
     QDomDocument doc = toXML(kategoria);
     PSWebService::Options opt;
     opt.id = kategoria.id;
@@ -202,12 +202,12 @@ void Prestashop::syncEdit(const SpecificPrice &specificPrice) {
     QDomDocument result = mPSWebService->syncPut(opt, doc);
 }
 
-unsigned Prestashop::syncAdd(const Kategoria &kategoria) {
+unsigned Prestashop::syncAdd(const Category &kategoria) {
     QDomDocument doc = toXML(kategoria);
     PSWebService::Options opt;
     opt.resource = "categories";
     QDomDocument result = mPSWebService->syncPost(opt, doc);
-    unsigned id = Kategoria::getId(result);
+    unsigned id = Category::getId(result);
     return id;
 }
 
@@ -221,57 +221,56 @@ void Prestashop::syncAdd(const SpecificPrice &specificPrice) {
 Order Prestashop::getOrder(QDomDocument &doc) const {
     QDomElement prestashop = doc.firstChildElement("prestashop");
     if(!prestashop.isNull()) {
-        QDomElement order = prestashop.firstChildElement("order");
-        if(!order.isNull()) {
-            Order zam;
-            zam.id = order.firstChildElement("id").firstChild().toCDATASection().nodeValue().toUInt();
-            zam.current_state = (Order::Status)order.firstChildElement("current_state").firstChild().toCDATASection().nodeValue().toUInt();
-
-            zam.id_address_delivery = order.firstChildElement("id_address_delivery").firstChild().toCDATASection().nodeValue().toUInt();
-            zam.id_address_invoice = order.firstChildElement("id_address_invoice").firstChild().toCDATASection().nodeValue().toUInt();
-            zam.id_cart = order.firstChildElement("id_cart").firstChild().toCDATASection().nodeValue().toUInt();
-            zam.id_currency = order.firstChildElement("id_currency").firstChild().toCDATASection().nodeValue().toUInt();
-            zam.id_lang = order.firstChildElement("id_lang").firstChild().toCDATASection().nodeValue().toUInt();
-            zam.id_customer = order.firstChildElement("id_customer").firstChild().toCDATASection().nodeValue().toUInt();
-            zam.id_carrier = order.firstChildElement("id_carrier").firstChild().toCDATASection().nodeValue().toUInt();
-            zam.module = order.firstChildElement("module").firstChild().toCDATASection().nodeValue();
-            zam.invoice_number = order.firstChildElement("invoice_number").firstChild().toCDATASection().nodeValue().toUInt();
-            zam.invoice_date = order.firstChildElement("invoice_date").firstChild().toCDATASection().nodeValue();
-            zam.delivery_number = order.firstChildElement("delivery_number").firstChild().toCDATASection().nodeValue().toUInt();
-            zam.delivery_date = order.firstChildElement("delivery_date").firstChild().toCDATASection().nodeValue();
-            zam.valid = order.firstChildElement("valid").firstChild().toCDATASection().nodeValue().toUInt();
-            zam.date_add = order.firstChildElement("date_add").firstChild().toCDATASection().nodeValue();
-            zam.date_upd = order.firstChildElement("date_upd").firstChild().toCDATASection().nodeValue();
-            zam.secure_key = order.firstChildElement("secure_key").firstChild().toCDATASection().nodeValue();
-            zam.payment = order.firstChildElement("payment").firstChild().toCDATASection().nodeValue();
-            zam.recyclable = order.firstChildElement("recyclable").firstChild().toCDATASection().nodeValue().toUInt();
-            zam.gift = order.firstChildElement("gift").firstChild().toCDATASection().nodeValue().toUInt();
-            zam.gift_message = order.firstChildElement("gift_message").firstChild().toCDATASection().nodeValue();
-            zam.total_discounts = order.firstChildElement("total_discounts").firstChild().toCDATASection().nodeValue().toFloat();
-            zam.total_paid = order.firstChildElement("total_paid").firstChild().toCDATASection().nodeValue().toFloat();
-            zam.total_paid_real = order.firstChildElement("total_paid_real").firstChild().toCDATASection().nodeValue().toFloat();
-            zam.total_products = order.firstChildElement("total_products").firstChild().toCDATASection().nodeValue().toFloat();
-            zam.total_products_wt = order.firstChildElement("total_products_wt").firstChild().toCDATASection().nodeValue().toFloat();
-            zam.total_shipping = order.firstChildElement("total_shipping").firstChild().toCDATASection().nodeValue().toFloat();
-            zam.carrier_tax_rate = order.firstChildElement("carrier_tax_rate").firstChild().toCDATASection().nodeValue().toFloat();
-            zam.total_wrapping = order.firstChildElement("carrier_tax_rate").firstChild().toCDATASection().nodeValue().toFloat();
-            zam.shipping_number = order.firstChildElement("shipping_number").firstChild().toCDATASection().nodeValue().toUInt();
-            zam.conversion_rate = order.firstChildElement("conversion_rate").firstChild().toCDATASection().nodeValue().toFloat();
+        QDomElement orderElem = prestashop.firstChildElement("order");
+        if(!orderElem.isNull()) {
+            Order order;
+            order.id = orderElem.firstChildElement("id").firstChild().toCDATASection().nodeValue().toUInt();
+            order.current_state = orderElem.firstChildElement("current_state").firstChild().toCDATASection().nodeValue().toUInt();
+            order.id_address_delivery = orderElem.firstChildElement("id_address_delivery").firstChild().toCDATASection().nodeValue().toUInt();
+            order.id_address_invoice = orderElem.firstChildElement("id_address_invoice").firstChild().toCDATASection().nodeValue().toUInt();
+            order.id_cart = orderElem.firstChildElement("id_cart").firstChild().toCDATASection().nodeValue().toUInt();
+            order.id_currency = orderElem.firstChildElement("id_currency").firstChild().toCDATASection().nodeValue().toUInt();
+            order.id_lang = orderElem.firstChildElement("id_lang").firstChild().toCDATASection().nodeValue().toUInt();
+            order.id_customer = orderElem.firstChildElement("id_customer").firstChild().toCDATASection().nodeValue().toUInt();
+            order.id_carrier = orderElem.firstChildElement("id_carrier").firstChild().toCDATASection().nodeValue().toUInt();
+            order.module = orderElem.firstChildElement("module").firstChild().toCDATASection().nodeValue();
+            order.invoice_number = orderElem.firstChildElement("invoice_number").firstChild().toCDATASection().nodeValue().toUInt();
+            order.invoice_date = orderElem.firstChildElement("invoice_date").firstChild().toCDATASection().nodeValue();
+            order.delivery_number = orderElem.firstChildElement("delivery_number").firstChild().toCDATASection().nodeValue().toUInt();
+            order.delivery_date = orderElem.firstChildElement("delivery_date").firstChild().toCDATASection().nodeValue();
+            order.valid = orderElem.firstChildElement("valid").firstChild().toCDATASection().nodeValue().toUInt();
+            order.date_add = orderElem.firstChildElement("date_add").firstChild().toCDATASection().nodeValue();
+            order.date_upd = orderElem.firstChildElement("date_upd").firstChild().toCDATASection().nodeValue();
+            order.secure_key = orderElem.firstChildElement("secure_key").firstChild().toCDATASection().nodeValue();
+            order.payment = orderElem.firstChildElement("payment").firstChild().toCDATASection().nodeValue();
+            order.recyclable = orderElem.firstChildElement("recyclable").firstChild().toCDATASection().nodeValue().toUInt();
+            order.gift = orderElem.firstChildElement("gift").firstChild().toCDATASection().nodeValue().toUInt();
+            order.gift_message = orderElem.firstChildElement("gift_message").firstChild().toCDATASection().nodeValue();
+            order.total_discounts = orderElem.firstChildElement("total_discounts").firstChild().toCDATASection().nodeValue().toFloat();
+            order.total_paid = orderElem.firstChildElement("total_paid").firstChild().toCDATASection().nodeValue().toFloat();
+            order.total_paid_real = orderElem.firstChildElement("total_paid_real").firstChild().toCDATASection().nodeValue().toFloat();
+            order.total_products = orderElem.firstChildElement("total_products").firstChild().toCDATASection().nodeValue().toFloat();
+            order.total_products_wt = orderElem.firstChildElement("total_products_wt").firstChild().toCDATASection().nodeValue().toFloat();
+            order.total_shipping = orderElem.firstChildElement("total_shipping").firstChild().toCDATASection().nodeValue().toFloat();
+            order.carrier_tax_rate = orderElem.firstChildElement("carrier_tax_rate").firstChild().toCDATASection().nodeValue().toFloat();
+            order.total_wrapping = orderElem.firstChildElement("carrier_tax_rate").firstChild().toCDATASection().nodeValue().toFloat();
+            order.shipping_number = orderElem.firstChildElement("shipping_number").firstChild().toCDATASection().nodeValue().toUInt();
+            order.conversion_rate = orderElem.firstChildElement("conversion_rate").firstChild().toCDATASection().nodeValue().toFloat();
 
             // produkty
-            QDomElement associations = order.firstChildElement("associations");
+            QDomElement associations = orderElem.firstChildElement("associations");
             QDomNodeList order_rows = associations.firstChildElement("order_rows").elementsByTagName("order_row");
             for(int i=0; i<order_rows.size(); ++i) {
-                QDomElement order_row = order_rows.at(i).toElement();
-                Order::OrderRow produkt;
-                produkt.id = order_row.firstChildElement("product_id").firstChild().toCDATASection().nodeValue().toUInt();
-                produkt.price = order_row.firstChildElement("product_price").firstChild().toCDATASection().nodeValue().toFloat();
-                produkt.quantity = order_row.firstChildElement("product_quantity").firstChild().toCDATASection().nodeValue().toUInt();
-                zam.order_rows << produkt;
+                QDomElement order_rowElem = order_rows.at(i).toElement();
+                Order::OrderRow order_row;
+                order_row.id = order_rowElem.firstChildElement("product_id").firstChild().toCDATASection().nodeValue().toUInt();
+                order_row.price = order_rowElem.firstChildElement("product_price").firstChild().toCDATASection().nodeValue().toFloat();
+                order_row.quantity = order_rowElem.firstChildElement("product_quantity").firstChild().toCDATASection().nodeValue().toUInt();
+                order.order_rows << order_row;
             }
 
             // zwracamy zamówienie
-            return zam;
+            return order;
         } else {
             throw QString("chujnia");
         }
@@ -280,47 +279,47 @@ Order Prestashop::getOrder(QDomDocument &doc) const {
     }
 }
 
-QDomDocument Prestashop::toXML(const Order &zamowienie)
+QDomDocument Prestashop::toXML(const Order &order)
 {
     QDomDocument doc = getPrestaXML();
-    QDomElement order = doc.createElement("order");
-    doc.firstChild().appendChild(order);
+    QDomElement orderElem = doc.createElement("order");
+    doc.firstChild().appendChild(orderElem);
 
-    if(zamowienie.id > 0)
-        order.appendChild(buildXMLElement(doc, "id",  QString::number(zamowienie.id)));
-    if(zamowienie.current_state > 0)
-        order.appendChild(buildXMLElement(doc, "current_state", QString::number((uint)zamowienie.current_state)));
+    if(order.id > 0)
+        orderElem.appendChild(buildXMLElement(doc, "id",  QString::number(order.id)));
+    if(order.current_state > 0)
+        orderElem.appendChild(buildXMLElement(doc, "current_state", QString::number((uint)order.current_state)));
 
-    order.appendChild(buildXMLElement(doc, "id_address_delivery", QString::number(zamowienie.id_address_delivery)));
-    order.appendChild(buildXMLElement(doc, "id_address_invoice", QString::number(zamowienie.id_address_invoice)));
-    order.appendChild(buildXMLElement(doc, "id_cart", QString::number(zamowienie.id_cart)));
-    order.appendChild(buildXMLElement(doc, "id_currency", QString::number(zamowienie.id_currency)));
-    order.appendChild(buildXMLElement(doc, "id_lang", QString::number(zamowienie.id_lang)));
-    order.appendChild(buildXMLElement(doc, "id_customer", QString::number(zamowienie.id_customer)));
-    order.appendChild(buildXMLElement(doc, "id_carrier", QString::number(zamowienie.id_carrier)));
-    order.appendChild(buildXMLElement(doc, "module", zamowienie.module));
-    order.appendChild(buildXMLElement(doc, "invoice_number", QString::number(zamowienie.invoice_number)));
-    order.appendChild(buildXMLElement(doc, "invoice_date", zamowienie.invoice_date));
-    order.appendChild(buildXMLElement(doc, "delivery_number", QString::number(zamowienie.delivery_number)));
-    order.appendChild(buildXMLElement(doc, "delivery_date", zamowienie.delivery_date));
-    order.appendChild(buildXMLElement(doc, "valid", QString::number(zamowienie.valid)));
-    order.appendChild(buildXMLElement(doc, "date_add", zamowienie.date_add));
-    order.appendChild(buildXMLElement(doc, "date_upd", zamowienie.date_upd));
-    order.appendChild(buildXMLElement(doc, "secure_key", zamowienie.secure_key));
-    order.appendChild(buildXMLElement(doc, "payment", zamowienie.payment));
-    order.appendChild(buildXMLElement(doc, "recyclable", QString::number(zamowienie.recyclable)));
-    order.appendChild(buildXMLElement(doc, "gift", QString::number(zamowienie.gift)));
-    order.appendChild(buildXMLElement(doc, "gift_message", zamowienie.gift_message));
-    order.appendChild(buildXMLElement(doc, "total_discounts", QString::number(zamowienie.total_discounts)));
-    order.appendChild(buildXMLElement(doc, "total_paid", QString::number(zamowienie.total_paid)));
-    order.appendChild(buildXMLElement(doc, "total_paid_real", QString::number(zamowienie.total_paid_real)));
-    order.appendChild(buildXMLElement(doc, "total_products", QString::number(zamowienie.total_products)));
-    order.appendChild(buildXMLElement(doc, "total_products_wt", QString::number(zamowienie.total_products_wt)));
-    order.appendChild(buildXMLElement(doc, "total_shipping", QString::number(zamowienie.total_shipping)));
-    order.appendChild(buildXMLElement(doc, "carrier_tax_rate", QString::number(zamowienie.carrier_tax_rate)));
-    order.appendChild(buildXMLElement(doc, "total_wrapping", QString::number(zamowienie.total_wrapping)));
-    order.appendChild(buildXMLElement(doc, "shipping_number", QString::number(zamowienie.shipping_number)));
-    order.appendChild(buildXMLElement(doc, "conversion_rate", QString::number(zamowienie.conversion_rate)));
+    orderElem.appendChild(buildXMLElement(doc, "id_address_delivery", QString::number(order.id_address_delivery)));
+    orderElem.appendChild(buildXMLElement(doc, "id_address_invoice", QString::number(order.id_address_invoice)));
+    orderElem.appendChild(buildXMLElement(doc, "id_cart", QString::number(order.id_cart)));
+    orderElem.appendChild(buildXMLElement(doc, "id_currency", QString::number(order.id_currency)));
+    orderElem.appendChild(buildXMLElement(doc, "id_lang", QString::number(order.id_lang)));
+    orderElem.appendChild(buildXMLElement(doc, "id_customer", QString::number(order.id_customer)));
+    orderElem.appendChild(buildXMLElement(doc, "id_carrier", QString::number(order.id_carrier)));
+    orderElem.appendChild(buildXMLElement(doc, "module", order.module));
+    orderElem.appendChild(buildXMLElement(doc, "invoice_number", QString::number(order.invoice_number)));
+    orderElem.appendChild(buildXMLElement(doc, "invoice_date", order.invoice_date));
+    orderElem.appendChild(buildXMLElement(doc, "delivery_number", QString::number(order.delivery_number)));
+    orderElem.appendChild(buildXMLElement(doc, "delivery_date", order.delivery_date));
+    orderElem.appendChild(buildXMLElement(doc, "valid", QString::number(order.valid)));
+    orderElem.appendChild(buildXMLElement(doc, "date_add", order.date_add));
+    orderElem.appendChild(buildXMLElement(doc, "date_upd", order.date_upd));
+    orderElem.appendChild(buildXMLElement(doc, "secure_key", order.secure_key));
+    orderElem.appendChild(buildXMLElement(doc, "payment", order.payment));
+    orderElem.appendChild(buildXMLElement(doc, "recyclable", QString::number(order.recyclable)));
+    orderElem.appendChild(buildXMLElement(doc, "gift", QString::number(order.gift)));
+    orderElem.appendChild(buildXMLElement(doc, "gift_message", order.gift_message));
+    orderElem.appendChild(buildXMLElement(doc, "total_discounts", QString::number(order.total_discounts)));
+    orderElem.appendChild(buildXMLElement(doc, "total_paid", QString::number(order.total_paid)));
+    orderElem.appendChild(buildXMLElement(doc, "total_paid_real", QString::number(order.total_paid_real)));
+    orderElem.appendChild(buildXMLElement(doc, "total_products", QString::number(order.total_products)));
+    orderElem.appendChild(buildXMLElement(doc, "total_products_wt", QString::number(order.total_products_wt)));
+    orderElem.appendChild(buildXMLElement(doc, "total_shipping", QString::number(order.total_shipping)));
+    orderElem.appendChild(buildXMLElement(doc, "carrier_tax_rate", QString::number(order.carrier_tax_rate)));
+    orderElem.appendChild(buildXMLElement(doc, "total_wrapping", QString::number(order.total_wrapping)));
+    orderElem.appendChild(buildXMLElement(doc, "shipping_number", QString::number(order.shipping_number)));
+    orderElem.appendChild(buildXMLElement(doc, "conversion_rate", QString::number(order.conversion_rate)));
     return doc;
 }
 
@@ -371,21 +370,21 @@ Order Prestashop::getOrder(uint id)
     }
 }
 
-QList<Order> Prestashop::getOrder(Order::Status status)
+QList<Order> Prestashop::getOrders(uint state)
 {
     try {
         PSWebService::Options opt;
         opt.resource = "orders";
-        opt.filter["current_state"] = "[" + QString::number((uint)status)+ "]";
+        opt.filter["current_state"] = QString::number(state);
         QDomDocument doc = mPSWebService->syncGet(opt);
 
         QList<Order> zamowienia;
 
         QDomElement prestashop = doc.firstChildElement("prestashop");
         if(!prestashop.isNull()) {
-            QDomNodeList orders = prestashop.firstChildElement("orders").elementsByTagName("order");
-            for(int i=0; i<orders.size(); ++i) {
-                uint id = orders.at(i).toElement().attribute("id").toUInt();
+            QDomNodeList orderNodeList = prestashop.firstChildElement("orders").elementsByTagName("order");
+            for(int i=0; i<orderNodeList.size(); ++i) {
+                uint id = orderNodeList.at(i).toElement().attribute("id").toUInt();
                 zamowienia << getOrder(id);
             }
             return zamowienia;
@@ -394,10 +393,10 @@ QList<Order> Prestashop::getOrder(Order::Status status)
             // TODO sygnalizacja b³êdu
         }
     } catch (PSWebService::PrestaError e) {
-        e.msg = "getZamowienie(Zamowienie::Status status)";
+        e.msg = "getOrder(Order::Status status)";
         throw e;
     } catch (PSWebService::OtherError e) {
-        e.msg = "getZamowienie(Zamowienie::Status status)";
+        e.msg = "getOrder(Order::Status status)";
         throw e;
     }
 }
@@ -407,6 +406,15 @@ QList<uint> Prestashop::getSpecificPrice(uint productId)
     PSWebService::Options opt;
     opt.resource = "specific_prices";
     opt.filter["product_id"] = QString::number(productId);
-    mPSWebService->syncGet(opt);
+    QDomDocument doc = mPSWebService->syncGet(opt);
+    QList<uint> result;
+    QDomElement prestashop = doc.firstChildElement("prestashop");
+    if(!prestashop.isNull()) {
+        QDomNodeList specific_prices = prestashop.firstChildElement("specific_prices").elementsByTagName("specific_price");
+        for(int i=0; i<specific_prices.size(); ++i) {
+            result << specific_prices.at(i).toElement().attribute("id").toUInt();
+        }
+    }
+    return result;
 }
 

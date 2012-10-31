@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
 
     //    for(int j=1; j<5; ++j) {
     //        try {
-    //            Zamowienie zamowienie = presta->zamowienie(j);
+    //            Order zamowienie = presta->zamowienie(j);
 
     //            qDebug() << "zamowienie nr " << zamowienie.id;
     //            qDebug() << "data dodania " << zamowienie.dataDodania;
@@ -34,9 +34,9 @@ int main(int argc, char *argv[])
     //        }
     //    }
 
-//    QList<Zamowienie> zamowienia = presta->getZamowienie(">=[1]");
+//    QList<Order> zamowienia = presta->getOrder(">=[1]");
 //    for(int i=0; i<zamowienia.size(); ++i) {
-//        const Zamowienie& zamowienie = zamowienia.at(i);
+//        const Order& zamowienie = zamowienia.at(i);
 //        qDebug() << "";
 //        qDebug() << "zamowienie nr " << zamowienie.id;
 //        qDebug() << "data dodania " << zamowienie.date_add;
@@ -46,10 +46,10 @@ int main(int argc, char *argv[])
 //        }
 //    }
 
-    //    Zamowienie zamowienie = presta->getZamowienie(2);
+    //    Order zamowienie = presta->getOrder(2);
     //    zamowienie.total_products = 1000;
     //    zamowienie.gift = 1;
-    //    zamowienie.status = Zamowienie::BEZ_ZMIAN;
+    //    zamowienie.status = Order::BEZ_ZMIAN;
     //    try {
     //        presta->syncEdit(zamowienie);
     //    } catch (PSWebService::PrestaError e) {
@@ -58,20 +58,12 @@ int main(int argc, char *argv[])
     //        logger->logError(e);
     //    }
 
-    Presta::SpecificPrice sp;
-    sp.id_product = 10;
-    sp.price = 100;
-    sp.reduction_type = Presta::SpecificPrice::AMOUNT;
-    sp.reduction = 50;
-    try {
-        presta->syncAdd(sp);
-    } catch (PSWebService::PrestaError e) {
-        logger->logError(e);
-    } catch (PSWebService::OtherError e) {
-        logger->logError(e);
-    }
-
-
+    Produkt prod;
+    prod.status = Produkt::SPRZEDAZ;
+    prod.idKC = 1000;
+    prod.cenaKC = 12.99;
+    prod.cenaPresta = 10.99;
+    prod.nazwa = "Œledzie z w polewie czekoladowej";
 
     return a.exec();
 }

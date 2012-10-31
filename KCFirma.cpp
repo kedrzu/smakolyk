@@ -9,7 +9,7 @@ KCFirma::KCFirma(Config &config, QObject *parent) :
 Kategoria KCFirma::kategoria(unsigned idKC) const {
      Kategoria kat;
      return kat;
- }
+}
 
 void KCFirma::zmianaKategorii(unsigned id, unsigned idKC) {
     qDebug() << "zmiana kategorii \tid=" << id << "\tidKC=" << idKC;

@@ -20,9 +20,7 @@ SOURCES += main.cpp \
     Logger.cpp \
     KCFirma.cpp \
     Produkt.cpp \
-    Kategoria.cpp \
     Config.cpp \
-    Zamowienie.cpp \
     KCPresta.cpp \
     PrestaStructs.cpp
 

@@ -103,6 +103,22 @@ struct Order
     Order();
 };
 
+struct Category {
+    uint id;
+    uint idRef;
+    uint active;
+    uint id_parent;
+    QString name;
+    QString meta_description;
+    QString meta_keywords;
+    QString meta_title;
+    QString link_rewrite;
+    QString description;
+
+    static uint getId(QDomDocument& doc);
+    Category();
+};
+
 }
 
 #endif // STRUCTS_H

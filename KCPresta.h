@@ -66,6 +66,7 @@ public:
     */
     bool isFinished() const { return mFinished; }
     Presta::Product kc2presta(const Produkt &produkt);
+    Presta::Category kc2presta(const Kategoria &kategoria);
     /*!
      \brief Zwraca liste produktow, ktorych nie udalo sie uploadowac wraz z rodzajem bledu.
 
