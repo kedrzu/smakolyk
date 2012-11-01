@@ -94,23 +94,25 @@ public:
 
 public:
 
-    enum blad {
+    enum Blad {
         BLAD_POLACZENIA_Z_BAZA,
         BLAD_ZAPYTANIA_GRUPY
     };
 
-protected:
-
 private:
 
+    QString mGenerujWzorzecKlasyfikacji(unsigned pozycja, QString status);
 
+    //Wzorzec z ktorym porównywana jest klasyfikacja w metodzie produkty (do operatora "LIKE")
+    QString mWzorzecKlasyfikacjiSprzedaz;
+    QString mWzorzecKlasyfikacjiKatalog;
+    QString mWzorzecKlasyfikacjiWylacz;
 
     QString mKCFirmaPath;
     QSqlDatabase mKCFirmaDB;
 
     QString mKCPosPath;
     QSqlDatabase mKCPosDB;
-
 
 
 };
