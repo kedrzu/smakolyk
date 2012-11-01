@@ -48,7 +48,7 @@ public:
         OtherError() {}
     };
 
-    PSWebService(const Config &config);
+    PSWebService(QString url, QString key);
     ~PSWebService();
     QNetworkReply *get(const Options& options);
     QNetworkReply *post(const Options &options, const QDomDocument& xml);

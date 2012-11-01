@@ -1,0 +1,22 @@
+<RCC>
+    <qresource prefix="/">
+        <file>icons/down_48.png</file>
+        <file>icons/paly_48.png</file>
+        <file>icons/pause_48.png</file>
+        <file>icons/up_48.png</file>
+        <file>icons/delete_48.png</file>
+        <file>icons/buy_32.png</file>
+        <file>icons/clock.png</file>
+        <file>icons/lorry.png</file>
+        <file>icons/package.png</file>
+        <file>icons/printer.png</file>
+        <file>icons/tick.png</file>
+        <file>icons/cancel.png</file>
+        <file>icons/globe_32.png</file>
+        <file>icons/error.png</file>
+        <file>icons/exclamation.png</file>
+        <file>icons/information.png</file>
+        <file>icons/bug.png</file>
+        <file>icons/buy_16.png</file>
+    </qresource>
+</RCC>

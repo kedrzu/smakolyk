@@ -7,8 +7,8 @@
 
 using namespace std;
 
-PSWebService::PSWebService(const Config &config)
-    : mUrl(config.url), mKey(config.key)
+PSWebService::PSWebService(QString url, QString key)
+    : mUrl(url), mKey(key)
 {
     mManager = new QNetworkAccessManager(this);
 
@@ -24,7 +24,7 @@ PSWebService::~PSWebService()
 QNetworkReply *PSWebService::get(const Options &options)
 {
     //if(options.resource.empty()) {
-    //    throw std::runtime_error("Podano z³e parametry.");
+    //    throw std::runtime_error("Podano zÅ‚e parametry.");
     //} else {
     QUrl url;
     if(options.id > 0) {
@@ -70,7 +70,7 @@ QDomDocument PSWebService::syncPost(const Options& options, const QDomDocument &
 QNetworkReply *PSWebService::put(const Options &options, const QDomDocument &xml)
 {
     //if(options.resource.empty() || options.id < 0) {
-    //    throw std::runtime_error("Podano z³e parametry.");
+    //    throw std::runtime_error("Podano zÅ‚e parametry.");
     //} else {
     QUrl url(mUrl + "/api/" + options.resource + "/" + QString::number(options.id));
 
@@ -94,11 +94,11 @@ QDomDocument PSWebService::readReply(QNetworkReply *reply) {
     reply->deleteLater();
     QDomDocument doc;
     bool parsed = doc.setContent(read);
-    // pomyœlnie odebrano XML
+    // pomyÅ›lnie odebrano XML
     if(error == QNetworkReply::NoError && parsed) {
         return doc;
     }
-    // wyst¹pi³ b³¹d i zwrócony zosta³ komunikat b³êdu w XML
+    // wystÄ…piÅ‚ bÅ‚Ä…d i zwrÃ³cony zostaÅ‚ komunikat bÅ‚Ä™du w XML
     else if(parsed) {
         PrestaError exception(error);
         exception.url = reply->url();
@@ -113,7 +113,7 @@ QDomDocument PSWebService::readReply(QNetworkReply *reply) {
         }
         throw exception;
     }
-    // nie uda³o siê sparsowaæ odpowiedzi XML
+    // nie udaÅ‚o siÄ™ sparsowaÄ‡ odpowiedzi XML
     else {
         OtherError exception;
         exception.code = error;

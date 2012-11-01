@@ -6,11 +6,11 @@
 
 using namespace Presta;
 
-Prestashop::Prestashop(const Config &config, PSWebService *pswebService, QObject *parent) :
+Prestashop::Prestashop(const QSettings& settings, PSWebService *pswebService, QObject *parent) :
     QObject(parent),
-    mPSWebService(pswebService),
-    mLangId(config.lang)
+    mPSWebService(pswebService)
 {
+    mLangId = settings.value("prestashop/lang").toUInt();
 }
 
 QDomDocument Prestashop::getPrestaXML() {
@@ -269,7 +269,7 @@ Order Prestashop::getOrder(QDomDocument &doc) const {
                 order.order_rows << order_row;
             }
 
-            // zwracamy zamówienie
+            // zwracamy zamÃ³wienie
             return order;
         } else {
             throw QString("chujnia");
@@ -370,12 +370,16 @@ Order Prestashop::getOrder(uint id)
     }
 }
 
-QList<Order> Prestashop::getOrders(uint state)
+QList<Order> Prestashop::getOrders(const QMap<QString, QString> &filter)
 {
     try {
         PSWebService::Options opt;
         opt.resource = "orders";
-        opt.filter["current_state"] = QString::number(state);
+        QMapIterator<QString, QString> it(filter);
+        while(it.hasNext()) {
+            it.next();
+            opt.filter[it.key()] = it.value();
+        }
         QDomDocument doc = mPSWebService->syncGet(opt);
 
         QList<Order> zamowienia;
@@ -390,7 +394,7 @@ QList<Order> Prestashop::getOrders(uint state)
             return zamowienia;
         } else {
             throw QString("chujnia");
-            // TODO sygnalizacja b³êdu
+            // TODO sygnalizacja bÅ‚Ä™du
         }
     } catch (PSWebService::PrestaError e) {
         e.msg = "getOrder(Order::Status status)";

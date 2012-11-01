@@ -1,24 +1,21 @@
-#include <QtCore/QCoreApplication>
+#include <QApplication>
 #include "KCPresta.h"
 #include "KCFirma.h"
 #include "Logger.h"
 #include <iostream>
+#include <QSettings>
+#include "MainWindow.h"
+
+#include <QDebug>
 
 using namespace std;
 
 int main(int argc, char *argv[])
 {
-    QCoreApplication a(argc, argv);
-    Config config;
-    config.url = "http://localhost/prestashop";
-    config.key = "DFHHPRHFWBQ47F55373EUA25FB9QXEFL";
-    config.lang = 6;
+    QApplication a(argc, argv);
 
-    PSWebService* webService = new PSWebService(config);
-    KCFirma* kcfirma = new KCFirma(config);
-    Presta::Prestashop* presta = new Presta::Prestashop(config, webService);
-    KCPresta* kcpresta = new KCPresta(config, webService, kcfirma);
-    Logger* logger = new Logger(kcpresta);
+    MainWindow main;
+    main.show();
 
     //    for(int j=1; j<5; ++j) {
     //        try {
@@ -57,13 +54,6 @@ int main(int argc, char *argv[])
     //    } catch (PSWebService::OtherError e) {
     //        logger->logError(e);
     //    }
-
-    Produkt prod;
-    prod.status = Produkt::SPRZEDAZ;
-    prod.idKC = 1000;
-    prod.cenaKC = 12.99;
-    prod.cenaPresta = 10.99;
-    prod.nazwa = "Œledzie z w polewie czekoladowej";
 
     return a.exec();
 }

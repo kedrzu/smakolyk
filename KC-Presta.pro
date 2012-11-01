@@ -4,13 +4,13 @@
 #
 #-------------------------------------------------
 
-QT       += core network xml
-
-QT       -= gui
+QT       += core network xml gui sql
 
 TARGET = KC-Presta
 CONFIG   += console
-CONFIG   -= app_bundle
+#CONFIG   -= app_bundle
+
+win32:RC_FILE = icon.rc
 
 TEMPLATE = app
 
@@ -22,7 +22,9 @@ SOURCES += main.cpp \
     Produkt.cpp \
     Config.cpp \
     KCPresta.cpp \
-    PrestaStructs.cpp
+    PrestaStructs.cpp \
+    MainWindow.cpp \
+    ConsoleDialog.cpp
 
 HEADERS += \
     PSWebService.h \
@@ -34,4 +36,16 @@ HEADERS += \
     Config.h \
     Zamowienie.h \
     KCPresta.h \
-    PrestaStructs.h
+    PrestaStructs.h \
+    MainWindow.h \
+    ConsoleDialog.h
+
+FORMS += \
+    MainWindow.ui \
+    ConsoleDialog.ui
+
+RESOURCES += \
+    icons.qrc
+
+OTHER_FILES += \
+    icon.rc

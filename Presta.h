@@ -9,6 +9,7 @@
 #include "Produkt.h"
 #include "Zamowienie.h"
 #include "PrestaStructs.h"
+#include <QSettings>
 
 /*!
  \brief
@@ -20,7 +21,7 @@ class Prestashop : public QObject
 {
     Q_OBJECT
 public:
-    Prestashop(const Config &config, PSWebService* pswebService, QObject *parent = 0);
+    Prestashop(const QSettings& settings, PSWebService* pswebService, QObject *parent = 0);
     QNetworkReply *add(const Product& product);
     QNetworkReply *add(const Category& kategoria);
     QNetworkReply *add(const SpecificPrice& specificPrice);
@@ -47,8 +48,9 @@ public:
      \param status
      \return QList<Order>
     */
-    QList<Order> getOrders(uint state);
+    QList<Order> getOrders(const QMap<QString, QString> &filter);
     QList<uint> getSpecificPrice(uint productId);
+    PSWebService *getWebService() const { return mPSWebService; }
     /*!
      \brief Synchroniczne dodawanie produktu w Presta.
 
