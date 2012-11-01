@@ -4,9 +4,10 @@
 #include <QtSql/QtSql>
 #include <QObject>
 #include <QMap>
+#include <QVector>
 #include "Kategoria.h"
 #include "Produkt.h"
-#include "Config.h"
+
 
 /*!
  \brief
@@ -25,7 +26,7 @@ public:
      \param config Obiekt konfiguracyjny
      \param parent
     */
-    explicit KCFirma(Config& config, QObject *parent = 0);
+    explicit KCFirma(QSettings settings, QObject *parent = 0);
     /*!
      \brief Pobranie kategorii z bazy danych
 
@@ -102,6 +103,8 @@ public:
 private:
 
     QString mGenerujWzorzecKlasyfikacji(unsigned pozycja, QString status);
+    bool mPorownajKlasyfikacje (QString wzor, QString klasyfikacja);
+    QString mGenerujOpisT (QSqlQuery &zapytanie);
 
     //Wzorzec z ktorym porównywana jest klasyfikacja w metodzie produkty (do operatora "LIKE")
     QString mWzorzecKlasyfikacjiSprzedaz;
@@ -116,5 +119,14 @@ private:
 
 
 };
+
+/*
+
+  Wymagany format bazy danych KC Pos
+  Dodatkowe tabele:
+       PrestaTowary : IDGrupyKC, IDKategoriaPresta
+       PrestaKategorie: IDKC, IDPresta, CenaPresta
+       PrestaZamowienia: ID, IDZamowienia, IDTowaru, KodKreskowy, CenaB
+  */
 
 #endif // KCFIRMA_H
