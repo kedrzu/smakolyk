@@ -26,7 +26,7 @@ public:
      \param config Obiekt konfiguracyjny
      \param parent
     */
-    explicit KCFirma(QSettings settings, QObject *parent = 0);
+    explicit KCFirma(QSettings &settings, QObject *parent = 0);
     /*!
      \brief Pobranie kategorii z bazy danych
 

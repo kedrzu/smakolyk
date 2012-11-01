@@ -1,11 +1,12 @@
 #include "KCFirma.h"
 #include <QDebug>
 
-KCFirma::KCFirma(QSettings settings, QObject *parent) :
+KCFirma::KCFirma(QSettings &settings, QObject *parent) :
     QObject(parent)
 {
-    //sciezki docelowo wczytywane z configa
-    mKCFirmaPath = settings.value("BazaKCFirmy", "c:\\KCFirma2\\Dane\\SMAKOLYK.dan");
+    //sciezki docelowo wczytywane z configa,
+    mKCFirmaPath = settings.value(QString("KC-Firma/db"), QString("c:\\KCFirma2\\Dane\\SMAKOLYK.dan") ).toString();
+
     mKCFirmaDB = QSqlDatabase::addDatabase("QODBC", "KCFirma");
     mKCFirmaDB.setDatabaseName("DRIVER={Microsoft Access Driver (*.mdb)};FIL={MS Access};"
                                "DBQ=" + mKCFirmaPath);
@@ -13,7 +14,7 @@ KCFirma::KCFirma(QSettings settings, QObject *parent) :
 
     //////////////////////////
 
-    mKCPosPath   = settings.value("BazaKCPos", "c:\\KCPos\\dane\\kasa.dan");
+    mKCPosPath   = settings.value("BazaKCPos", QString("c:\\KCPos\\dane\\kasa.dan")).toString();
     mKCPosDB = QSqlDatabase::addDatabase("QODBC", "KCPos");
     mKCPosDB.setDatabaseName("DRIVER={Microsoft Access Driver (*.mdb)};"
                                "Dbq=" + mKCPosPath);
@@ -29,12 +30,12 @@ KCFirma::KCFirma(QSettings settings, QObject *parent) :
     //przykładowa klasyfikacja 006000000007002000000000000000
     // przykladowy wzor:      "006???????????????????????????"
 
-    QString nrKlasyfikacjiSprzedaz = settings.value("nrKlasyfikacjiSprzedaz", QString::number(0));
-    QString nrKlasyfikacjiKatalog  = settings.value("nrKlasyfikacjiKatalog",  QString::number(0));
-    QString nrKlasyfikacjiWylacz   = settings.value("nrKlasyfikacjiWylacz"  , QString::number(0));
-    QString wzorKlasyfikacjiSprzedaz = settings.value("wzorKlasyfikacjiSprzedaz", QString("002"));
-    QString wzorKlasyfikacjiKatalog  = settings.value("wzorKlasyfikacjiKatalog" , QString("001"));
-    QString wzorKlasyfikacjiWylacz   = settings.value("wzorKlasyfikacjiWylacz"  , QString("000"));
+    QString nrKlasyfikacjiSprzedaz = settings.value("nrKlasyfikacjiSprzedaz", QString::number(0)).toString();
+    QString nrKlasyfikacjiKatalog  = settings.value("nrKlasyfikacjiKatalog",  QString::number(0)).toString();
+    QString nrKlasyfikacjiWylacz   = settings.value("nrKlasyfikacjiWylacz"  , QString::number(0)).toString();
+    QString wzorKlasyfikacjiSprzedaz = settings.value("wzorKlasyfikacjiSprzedaz", QString("002")).toString();
+    QString wzorKlasyfikacjiKatalog  = settings.value("wzorKlasyfikacjiKatalog" , QString("001")).toString();
+    QString wzorKlasyfikacjiWylacz   = settings.value("wzorKlasyfikacjiWylacz"  , QString("000")).toString();
 
     mWzorzecKlasyfikacjiSprzedaz = mGenerujWzorzecKlasyfikacji(nrKlasyfikacjiSprzedaz.toInt(),wzorKlasyfikacjiSprzedaz);
     mWzorzecKlasyfikacjiKatalog  = mGenerujWzorzecKlasyfikacji(nrKlasyfikacjiKatalog.toInt(), wzorKlasyfikacjiKatalog);
