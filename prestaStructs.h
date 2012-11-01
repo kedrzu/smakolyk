@@ -78,6 +78,8 @@ struct Order
     uint invoice_number;
     uint delivery_number;
     uint valid;
+    uint id_shop_group;
+    uint id_shop;
     uint recyclable;
     uint gift;
     uint shipping_number;
@@ -90,6 +92,14 @@ struct Order
     float carrier_tax_rate;
     float total_wrapping;
     float conversion_rate;
+    float total_discounts_tax_incl;
+    float total_discounts_tax_excl;
+    float total_paid_tax_incl;
+    float total_paid_tax_excl;
+    float total_shipping_tax_incl;
+    float total_shipping_tax_excl;
+    float total_wrapping_tax_incl;
+    float total_wrapping_tax_excl;
     QString date_add;
     QString date_upd;
     QString secure_key;
@@ -98,9 +108,20 @@ struct Order
     QString module;
     QString gift_message;
     QString invoice_date;
+    QString reference;
     QList<Order::OrderRow> order_rows;
 
     Order();
+};
+
+struct OrderHeader {
+    uint id;
+    uint current_state;
+    float total_paid;
+    QString reference;
+    QString date_add;
+
+    OrderHeader();
 };
 
 struct Category {

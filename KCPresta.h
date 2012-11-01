@@ -20,6 +20,15 @@ public:
         EDIT_ERROR, /*!< Nie udalo sie edytowac produktu */
         KATEGORIA /*!< Nie udalo sie uploadowac kategorii do ktorej nalezy produkt */
     };
+    enum ZamowienieStatus {
+        OCZEKUJE,
+        W_REALIZACJI,
+        DO_ODBIORU,
+        WYSLANE,
+        ZREALIZOWANE,
+        ANULOWANE
+    };
+
     /*!
      \brief Żądanie pobrania listy kategorii z Prestashop.
 
@@ -57,14 +66,20 @@ public:
      \return bool
     */
     bool isUploadFinished() const { return mUploadFinished; }
-
     /*!
      \brief Zwraca liste produktow, ktorych nie udalo sie uploadowac wraz z rodzajem bledu.
 
      \return const QMap<unsigned, ProduktError>&
     */
     const QMap<unsigned, ProduktError>& produktyBledy() { return mProduktyError; }
+    /*!
+     \brief Wywołanie powoduje pobranie listy zamówień
 
+    */
+    QList<Presta::OrderHeader> pobierzZamowienia();
+    ZamowienieStatus statusyZamowien(uint i) const { return mStatusyZamowien.key(i); }
+    uint statusyZamowien(ZamowienieStatus status) const { return mStatusyZamowien[status]; }
+    static QString statusyZamowienNazwa(ZamowienieStatus status);
 signals:
     /*!
      \brief Sygnal emitowany w momencia zakonczenia uploadu.
@@ -107,7 +122,7 @@ public slots:
      \brief Wywolanie slotu powoduje uploadowanie produktow w buforze
 
     */
-    void upload();
+    void uploadProdukty();
 
 protected slots:
     void productAdded();
@@ -133,10 +148,10 @@ protected:
     PSWebService* mPSWebService;
     QMap<unsigned, unsigned> mKatNadrzedne;
     QMap<unsigned, Produkt> mProdukty;
-
     QMap<unsigned, ProduktError> mProduktyError;
     bool mUploadFinished;
     uint mProduktyUpload;
+    QMap<ZamowienieStatus, uint> mStatusyZamowien;
 };
 
 #endif // KCPRESTA_H

@@ -18,5 +18,6 @@
         <file>icons/information.png</file>
         <file>icons/bug.png</file>
         <file>icons/buy_16.png</file>
+        <file>icons/basket.png</file>
     </qresource>
 </RCC>

@@ -19,23 +19,26 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout">
-    <property name="topMargin">
+    <property name="spacing">
      <number>0</number>
     </property>
-    <property name="bottomMargin">
+    <property name="margin">
      <number>0</number>
     </property>
     <item>
      <widget class="QWidget" name="widget" native="true">
+      <property name="styleSheet">
+       <string notr="true">background-color: rgb(231, 243, 255)</string>
+      </property>
       <layout class="QVBoxLayout" name="verticalLayout_3">
        <property name="leftMargin">
-        <number>0</number>
+        <number>9</number>
        </property>
        <property name="topMargin">
         <number>0</number>
        </property>
        <property name="rightMargin">
-        <number>0</number>
+        <number>6</number>
        </property>
        <item>
         <widget class="QWidget" name="widget_8" native="true">
@@ -81,6 +84,9 @@
          <property name="focusPolicy">
           <enum>Qt::WheelFocus</enum>
          </property>
+         <property name="styleSheet">
+          <string notr="true">background-color:rgb(255, 255, 255)</string>
+         </property>
         </widget>
        </item>
        <item>
@@ -113,6 +119,9 @@
                 <font>
                  <pointsize>12</pointsize>
                 </font>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">background: none</string>
                </property>
                <property name="text">
                 <string>Start</string>
@@ -147,6 +156,9 @@
                 <font>
                  <pointsize>12</pointsize>
                 </font>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">background: none</string>
                </property>
                <property name="text">
                 <string>Stop</string>
@@ -214,6 +226,9 @@
                  <pointsize>11</pointsize>
                 </font>
                </property>
+               <property name="styleSheet">
+                <string notr="true">background: none</string>
+               </property>
                <property name="text">
                 <string>Wyślij towary</string>
                </property>
@@ -236,6 +251,9 @@
                  <pointsize>11</pointsize>
                 </font>
                </property>
+               <property name="styleSheet">
+                <string notr="true">background: none</string>
+               </property>
                <property name="text">
                 <string>Pobierz zamówienia</string>
                </property>
@@ -257,6 +275,9 @@
                 <font>
                  <pointsize>11</pointsize>
                 </font>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">background: none</string>
                </property>
                <property name="text">
                 <string>Koniec</string>
@@ -284,6 +305,9 @@
     </item>
     <item>
      <widget class="Line" name="line">
+      <property name="frameShadow">
+       <enum>QFrame::Plain</enum>
+      </property>
       <property name="orientation">
        <enum>Qt::Vertical</enum>
       </property>
@@ -297,15 +321,18 @@
         <verstretch>0</verstretch>
        </sizepolicy>
       </property>
+      <property name="styleSheet">
+       <string notr="true">background-color:rgb(233, 255, 234)</string>
+      </property>
       <layout class="QVBoxLayout" name="verticalLayout_2">
        <property name="leftMargin">
-        <number>0</number>
+        <number>6</number>
        </property>
        <property name="topMargin">
         <number>0</number>
        </property>
        <property name="rightMargin">
-        <number>0</number>
+        <number>9</number>
        </property>
        <property name="bottomMargin">
         <number>9</number>
@@ -350,7 +377,14 @@
         </widget>
        </item>
        <item>
-        <widget class="QListWidget" name="listaZamowien"/>
+        <widget class="QListWidget" name="listaZamowien">
+         <property name="styleSheet">
+          <string notr="true">background-color: white</string>
+         </property>
+         <property name="selectionMode">
+          <enum>QAbstractItemView::MultiSelection</enum>
+         </property>
+        </widget>
        </item>
        <item>
         <widget class="QWidget" name="widget_4" native="true">
@@ -365,12 +399,15 @@
               <pointsize>9</pointsize>
              </font>
             </property>
+            <property name="styleSheet">
+             <string notr="true">background: none</string>
+            </property>
             <property name="text">
              <string>Do realizacji</string>
             </property>
             <property name="icon">
              <iconset resource="icons.qrc">
-              <normaloff>:/icons/lorry.png</normaloff>:/icons/lorry.png</iconset>
+              <normaloff>:/icons/basket.png</normaloff>:/icons/basket.png</iconset>
             </property>
             <property name="iconSize">
              <size>
@@ -386,6 +423,9 @@
              <font>
               <pointsize>9</pointsize>
              </font>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">background: none</string>
             </property>
             <property name="text">
              <string>Do odbioru</string>
@@ -409,6 +449,9 @@
               <pointsize>9</pointsize>
              </font>
             </property>
+            <property name="styleSheet">
+             <string notr="true">background: none</string>
+            </property>
             <property name="text">
              <string>Rezygnacja</string>
             </property>
@@ -430,6 +473,9 @@
              <font>
               <pointsize>9</pointsize>
              </font>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">background: none</string>
             </property>
             <property name="text">
              <string>Zrealizowane</string>
@@ -455,6 +501,9 @@
           <font>
            <pointsize>9</pointsize>
           </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">background: none</string>
          </property>
          <property name="text">
           <string>Drukuj zaznaczone</string>

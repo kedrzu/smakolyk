@@ -239,6 +239,8 @@ Order Prestashop::getOrder(QDomDocument &doc) const {
             order.delivery_number = orderElem.firstChildElement("delivery_number").firstChild().toCDATASection().nodeValue().toUInt();
             order.delivery_date = orderElem.firstChildElement("delivery_date").firstChild().toCDATASection().nodeValue();
             order.valid = orderElem.firstChildElement("valid").firstChild().toCDATASection().nodeValue().toUInt();
+            order.id_shop_group = orderElem.firstChildElement("id_shop_group").firstChild().toCDATASection().nodeValue().toUInt();
+            order.id_shop = orderElem.firstChildElement("id_shop").firstChild().toCDATASection().nodeValue().toUInt();
             order.date_add = orderElem.firstChildElement("date_add").firstChild().toCDATASection().nodeValue();
             order.date_upd = orderElem.firstChildElement("date_upd").firstChild().toCDATASection().nodeValue();
             order.secure_key = orderElem.firstChildElement("secure_key").firstChild().toCDATASection().nodeValue();
@@ -246,6 +248,7 @@ Order Prestashop::getOrder(QDomDocument &doc) const {
             order.recyclable = orderElem.firstChildElement("recyclable").firstChild().toCDATASection().nodeValue().toUInt();
             order.gift = orderElem.firstChildElement("gift").firstChild().toCDATASection().nodeValue().toUInt();
             order.gift_message = orderElem.firstChildElement("gift_message").firstChild().toCDATASection().nodeValue();
+            order.reference = orderElem.firstChildElement("reference").firstChild().toCDATASection().nodeValue();
             order.total_discounts = orderElem.firstChildElement("total_discounts").firstChild().toCDATASection().nodeValue().toFloat();
             order.total_paid = orderElem.firstChildElement("total_paid").firstChild().toCDATASection().nodeValue().toFloat();
             order.total_paid_real = orderElem.firstChildElement("total_paid_real").firstChild().toCDATASection().nodeValue().toFloat();
@@ -256,6 +259,14 @@ Order Prestashop::getOrder(QDomDocument &doc) const {
             order.total_wrapping = orderElem.firstChildElement("carrier_tax_rate").firstChild().toCDATASection().nodeValue().toFloat();
             order.shipping_number = orderElem.firstChildElement("shipping_number").firstChild().toCDATASection().nodeValue().toUInt();
             order.conversion_rate = orderElem.firstChildElement("conversion_rate").firstChild().toCDATASection().nodeValue().toFloat();
+            order.total_discounts_tax_incl = orderElem.firstChildElement("total_discounts_tax_incl").firstChild().toCDATASection().nodeValue().toFloat();
+            order.total_discounts_tax_excl = orderElem.firstChildElement("total_discounts_tax_excl").firstChild().toCDATASection().nodeValue().toFloat();
+            order.total_paid_tax_incl = orderElem.firstChildElement("total_paid_tax_incl").firstChild().toCDATASection().nodeValue().toFloat();
+            order.total_paid_tax_excl = orderElem.firstChildElement("total_paid_tax_excl").firstChild().toCDATASection().nodeValue().toFloat();
+            order.total_shipping_tax_incl = orderElem.firstChildElement("total_shipping_tax_incl").firstChild().toCDATASection().nodeValue().toFloat();
+            order.total_shipping_tax_excl = orderElem.firstChildElement("total_shipping_tax_excl").firstChild().toCDATASection().nodeValue().toFloat();
+            order.total_wrapping_tax_incl = orderElem.firstChildElement("total_wrapping_tax_incl").firstChild().toCDATASection().nodeValue().toFloat();
+            order.total_wrapping_tax_excl = orderElem.firstChildElement("total_wrapping_tax_excl").firstChild().toCDATASection().nodeValue().toFloat();
 
             // produkty
             QDomElement associations = orderElem.firstChildElement("associations");
@@ -303,6 +314,8 @@ QDomDocument Prestashop::toXML(const Order &order)
     orderElem.appendChild(buildXMLElement(doc, "delivery_number", QString::number(order.delivery_number)));
     orderElem.appendChild(buildXMLElement(doc, "delivery_date", order.delivery_date));
     orderElem.appendChild(buildXMLElement(doc, "valid", QString::number(order.valid)));
+    orderElem.appendChild(buildXMLElement(doc, "id_shop_group", QString::number(order.id_shop_group)));
+    orderElem.appendChild(buildXMLElement(doc, "id_shop", QString::number(order.id_shop)));
     orderElem.appendChild(buildXMLElement(doc, "date_add", order.date_add));
     orderElem.appendChild(buildXMLElement(doc, "date_upd", order.date_upd));
     orderElem.appendChild(buildXMLElement(doc, "secure_key", order.secure_key));
@@ -310,6 +323,7 @@ QDomDocument Prestashop::toXML(const Order &order)
     orderElem.appendChild(buildXMLElement(doc, "recyclable", QString::number(order.recyclable)));
     orderElem.appendChild(buildXMLElement(doc, "gift", QString::number(order.gift)));
     orderElem.appendChild(buildXMLElement(doc, "gift_message", order.gift_message));
+    orderElem.appendChild(buildXMLElement(doc, "reference", order.reference));
     orderElem.appendChild(buildXMLElement(doc, "total_discounts", QString::number(order.total_discounts)));
     orderElem.appendChild(buildXMLElement(doc, "total_paid", QString::number(order.total_paid)));
     orderElem.appendChild(buildXMLElement(doc, "total_paid_real", QString::number(order.total_paid_real)));
@@ -320,6 +334,15 @@ QDomDocument Prestashop::toXML(const Order &order)
     orderElem.appendChild(buildXMLElement(doc, "total_wrapping", QString::number(order.total_wrapping)));
     orderElem.appendChild(buildXMLElement(doc, "shipping_number", QString::number(order.shipping_number)));
     orderElem.appendChild(buildXMLElement(doc, "conversion_rate", QString::number(order.conversion_rate)));
+    orderElem.appendChild(buildXMLElement(doc, "total_discounts_tax_incl", QString::number(order.total_discounts_tax_incl)));
+    orderElem.appendChild(buildXMLElement(doc, "total_discounts_tax_excl", QString::number(order.total_discounts_tax_excl)));
+    orderElem.appendChild(buildXMLElement(doc, "total_paid_tax_incl", QString::number(order.total_paid_tax_incl)));
+    orderElem.appendChild(buildXMLElement(doc, "total_paid_tax_excl", QString::number(order.total_paid_tax_excl)));
+    orderElem.appendChild(buildXMLElement(doc, "total_shipping_tax_incl", QString::number(order.total_shipping_tax_incl)));
+    orderElem.appendChild(buildXMLElement(doc, "total_shipping_tax_excl", QString::number(order.total_shipping_tax_excl)));
+    orderElem.appendChild(buildXMLElement(doc, "total_wrapping_tax_incl", QString::number(order.conversion_rate)));
+    orderElem.appendChild(buildXMLElement(doc, "total_wrapping_tax_excl", QString::number(order.conversion_rate)));
+
     return doc;
 }
 
@@ -370,11 +393,12 @@ Order Prestashop::getOrder(uint id)
     }
 }
 
-QList<Order> Prestashop::getOrders(const QMap<QString, QString> &filter)
+QList<OrderHeader> Prestashop::getOrderHeader(const QMap<QString, QString> &filter)
 {
     try {
         PSWebService::Options opt;
         opt.resource = "orders";
+        opt.display = "[id,current_state,total_paid,reference,date_add]";
         QMapIterator<QString, QString> it(filter);
         while(it.hasNext()) {
             it.next();
@@ -382,25 +406,30 @@ QList<Order> Prestashop::getOrders(const QMap<QString, QString> &filter)
         }
         QDomDocument doc = mPSWebService->syncGet(opt);
 
-        QList<Order> zamowienia;
+        QList<OrderHeader> orders;
 
         QDomElement prestashop = doc.firstChildElement("prestashop");
         if(!prestashop.isNull()) {
             QDomNodeList orderNodeList = prestashop.firstChildElement("orders").elementsByTagName("order");
             for(int i=0; i<orderNodeList.size(); ++i) {
-                uint id = orderNodeList.at(i).toElement().attribute("id").toUInt();
-                zamowienia << getOrder(id);
+                OrderHeader orderHeader;
+                orderHeader.id = orderNodeList.at(i).firstChildElement("id").firstChild().toCDATASection().nodeValue().toUInt();
+                orderHeader.current_state = orderNodeList.at(i).firstChildElement("current_state").firstChild().toCDATASection().nodeValue().toUInt();
+                orderHeader.total_paid = orderNodeList.at(i).firstChildElement("total_paid").firstChild().toCDATASection().nodeValue().toFloat();
+                orderHeader.reference = orderNodeList.at(i).firstChildElement("reference").firstChild().toCDATASection().nodeValue();
+                orderHeader.date_add = orderNodeList.at(i).firstChildElement("date_add").firstChild().toCDATASection().nodeValue();
+                orders << orderHeader;
             }
-            return zamowienia;
+            return orders;
         } else {
             throw QString("chujnia");
             // TODO sygnalizacja błędu
         }
     } catch (PSWebService::PrestaError e) {
-        e.msg = "getOrder(Order::Status status)";
+        e.msg = "QList<OrderHeader> Prestashop::getOrderHeader(const QMap<QString, QString> &filter)";
         throw e;
     } catch (PSWebService::OtherError e) {
-        e.msg = "getOrder(Order::Status status)";
+        e.msg = "QList<OrderHeader> Prestashop::getOrderHeader(const QMap<QString, QString> &filter)";
         throw e;
     }
 }

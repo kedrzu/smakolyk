@@ -8,6 +8,12 @@ KCPresta::KCPresta(const QSettings& settings, Prestashop *presta, KCFirma *kcFir
     mUploadFinished(true),
     mProduktyUpload(settings.value("KC-Presta/produkty_upload").toUInt())
 {
+    mStatusyZamowien[OCZEKUJE] = settings.value("zamowienia/oczekuje").toUInt();
+    mStatusyZamowien[W_REALIZACJI] = settings.value("zamowienia/w_realizacji").toUInt();
+    mStatusyZamowien[DO_ODBIORU] = settings.value("zamowienia/do_odbioru").toUInt();
+    mStatusyZamowien[WYSLANE] = settings.value("zamowienia/wyslane").toUInt();
+    mStatusyZamowien[ZREALIZOWANE] = settings.value("zamowienia/zrealizowane").toUInt();
+    mStatusyZamowien[ANULOWANE] = settings.value("zamowienia/anulowane").toUInt();
 }
 
 void KCPresta::aktualizujKategorie()
@@ -72,7 +78,7 @@ SpecificPrice KCPresta::getSpecificPrice(const Produkt &produkt)
     return sp;
 }
 
-void KCPresta::upload() {
+void KCPresta::uploadProdukty() {
 
     // ustawiamy flagę
     mUploadFinished = false;
@@ -306,11 +312,11 @@ void KCPresta::productEdited(QNetworkReply *reply)
         mKCFirma->zmianaProduktu(id, idKC, prod.cenaPresta);
         mProdukty.remove(idKC);
     } catch (PSWebService::PrestaError e) {
-        e.msg = "productEdited()";
+        e.msg = "void KCPresta::productEdited(QNetworkReply *reply)";
         mProduktyError[idKC] = EDIT_ERROR;
         emit error(e);
     } catch (PSWebService::OtherError e) {
-        e.msg = "productEdited()";
+        e.msg = "void KCPresta::productEdited(QNetworkReply *reply)";
         mProduktyError[idKC] = EDIT_ERROR;
         emit error(e);
     }
@@ -391,4 +397,25 @@ Presta::Category KCPresta::kc2presta(const Kategoria &kategoria)
     category.link_rewrite = kategoria.nazwa;
     category.link_rewrite = category.link_rewrite.replace(" ", "-").toLower();
     return category;
+}
+
+QList<Presta::OrderHeader> KCPresta::pobierzZamowienia()
+{
+    QMap<QString, QString> filter;
+    filter["current_state"] = "[" + QString::number(mStatusyZamowien[OCZEKUJE]) + "|" + QString::number(mStatusyZamowien[W_REALIZACJI]) + "|" + QString::number(mStatusyZamowien[DO_ODBIORU]) + "]";
+    return mPresta->getOrderHeader(filter);
+}
+
+QString KCPresta::statusyZamowienNazwa(ZamowienieStatus status)
+{
+    QString result;
+    switch(status) {
+        case KCPresta::OCZEKUJE: result=QString::fromUtf8("Oczekujące"); break;
+        case KCPresta::W_REALIZACJI: result=QString::fromUtf8("W realizacji"); break;
+        case KCPresta::DO_ODBIORU: result=QString::fromUtf8("Do odbioru"); break;
+        case KCPresta::WYSLANE: result=QString::fromUtf8("Wysłane"); break;
+        case KCPresta::ZREALIZOWANE: result=QString::fromUtf8("Zrealizowane"); break;
+        case KCPresta::ANULOWANE: result=QString::fromUtf8("Anulowane"); break;
+    }
+    return result;
 }

@@ -46,10 +46,21 @@ public:
      \brief Pobiera z presta zamowienia o podanym stanie.
 
      \param status
-     \return QList<Order>
+     \return QList<OrderHeader>
     */
-    QList<Order> getOrders(const QMap<QString, QString> &filter);
+    QList<OrderHeader> getOrderHeader(const QMap<QString, QString> &filter);
+    /*!
+     \brief Pobiera identyfikatory cen specjalnych dla danego id produktu.
+
+     \param productId
+     \return QList<uint>
+    */
     QList<uint> getSpecificPrice(uint productId);
+    /*!
+     \brief Zwraca webservice.
+
+     \return PSWebService
+    */
     PSWebService *getWebService() const { return mPSWebService; }
     /*!
      \brief Synchroniczne dodawanie produktu w Presta.

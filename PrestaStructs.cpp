@@ -52,6 +52,8 @@ Order::Order() :
     invoice_number(0),
     delivery_number(0),
     valid(0),
+    id_shop_group(0),
+    id_shop(0),
     recyclable(0),
     gift(0),
     shipping_number(0),
@@ -63,7 +65,21 @@ Order::Order() :
     total_shipping(0),
     carrier_tax_rate(0),
     total_wrapping(0),
-    conversion_rate(0)
+    conversion_rate(0),
+    total_discounts_tax_incl(0),
+    total_discounts_tax_excl(0),
+    total_paid_tax_incl(0),
+    total_paid_tax_excl(0),
+    total_shipping_tax_incl(0),
+    total_shipping_tax_excl(0),
+    total_wrapping_tax_incl(0),
+    total_wrapping_tax_excl(0)
+{}
+
+OrderHeader::OrderHeader() :
+    id(0),
+    current_state(0),
+    total_paid(0)
 {}
 
 Category::Category() :

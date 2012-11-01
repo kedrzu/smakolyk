@@ -35,10 +35,19 @@ private slots:
     void koniec();
     void showLog(QListWidgetItem* item);
 
+    void on_buttonDoRealizacji_clicked();
+
+    void on_buttonDoOdbioru_clicked();
+
+    void on_buttonRezygnacja_clicked();
+
+    void on_buttonZrealizowane_clicked();
+
 private:
     void updateTimer();
     void updateGUI();
     void clearLog();
+    void updateZamowienia(KCPresta::ZamowienieStatus status);
 
     Ui::MainWindow *ui;
     bool mStart;
@@ -47,11 +56,14 @@ private:
     uint mMaxLogMsgs;
     QTimer mTimer;
     QMap<QListWidgetItem*, QString> mConsoleLog;
+    QMap<uint, QListWidgetItem*> mZamowieniaWidgetItem;
+    QMap<uint, Presta::OrderHeader> mZamowieniaHeaders;
     PSWebService* mWebService;
     Presta::Prestashop *mPresta;
     KCFirma *mKCFirma;
     KCPresta *mKCPresta;
     Logger *mLogger;
+    QMap<KCPresta::ZamowienieStatus, QIcon> mZamowieniaIkony;
 };
 
 #endif // MAINWINDOW_H

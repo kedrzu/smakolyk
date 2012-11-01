@@ -12,8 +12,6 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     connect(&mTimer, SIGNAL(timeout()), this, SLOT(timeout()));
-    updateTimer();
-    updateGUI();
 
     // odczytujemy konfigurację
     QSettings config("config.ini", QSettings::IniFormat);
@@ -44,6 +42,21 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(mKCPresta, SIGNAL(debug(QString)), this, SLOT(logDebug(QString)));
     connect(mKCPresta, SIGNAL(error(PSWebService::PrestaError)), this, SLOT(logError(PSWebService::PrestaError)));
     connect(mKCPresta, SIGNAL(error(PSWebService::OtherError)), this, SLOT(logError(PSWebService::OtherError)));
+
+    // ikony zamówień
+    mZamowieniaIkony[KCPresta::OCZEKUJE] = QIcon(":/icons/clock.png");
+    mZamowieniaIkony[KCPresta::W_REALIZACJI] = QIcon(":/icons/basket.png");
+    mZamowieniaIkony[KCPresta::DO_ODBIORU] = QIcon(":/icons/package.png");
+    mZamowieniaIkony[KCPresta::WYSLANE] = QIcon(":/icons/lorry.png");
+    mZamowieniaIkony[KCPresta::ZREALIZOWANE] = QIcon(":/icons/tick.png");
+    mZamowieniaIkony[KCPresta::ANULOWANE] = QIcon(":/icons/cancel.png");
+
+    updateTimer();
+    updateGUI();
+
+    // autostart
+    if(config.value("KC-Presta/autostart").toUInt())
+        start();
 }
 
 MainWindow::~MainWindow()
@@ -61,6 +74,7 @@ void MainWindow::start()
     if(!mStart) {
         mStart = true;
         updateGUI();
+        pobierzZamowienia();
         wyslijTowary();
     }
 }
@@ -81,6 +95,7 @@ void MainWindow::timeout()
     if(mKCPresta->isUploadFinished()) {
         if(mSekundy == 0) {
             mTimer.stop();
+            pobierzZamowienia();
             wyslijTowary();
         } else if(mSekundy > 0) {
             --mSekundy;
@@ -104,7 +119,7 @@ void MainWindow::wyslijTowary()
             mKCPresta->aktualizujKategorie();
             uint liczbaProduktow = mKCPresta->buforProduktow().size();
             do {
-                mKCPresta->upload();
+                mKCPresta->uploadProdukty();
                 QEventLoop loop;
                 if(!mKCPresta->isUploadFinished()) {
                     QObject::connect(mKCPresta, SIGNAL(uploadFinished()), &loop, SLOT(quit()));
@@ -129,20 +144,38 @@ void MainWindow::wyslijTowary()
 
 void MainWindow::pobierzZamowienia()
 {
-    for(int i=0; i<10; ++i) {
-        logNotice(QString::fromUtf8("oto jest wiadomość przykładowa"));
-        logWarning(QString::fromUtf8("oto jest ostrzeżenie przykładowe"));
-        logNotice(QString::fromUtf8("oto jest wiadomość przykładowa"));
-        logWarning(QString::fromUtf8("oto jest ostrzeżenie przykładowe"));
-        PSWebService::PrestaError err;
-        err.code = QNetworkReply::ContentAccessDenied;
-        err.msg = "kupe robilem";
-        err.url = "http://onet.pl";
-        logError(err);
+    ui->timeLeft->setText(QString::fromUtf8("POBIERAM ZAMÓWIENIA"));
+    try {
+        QList<Presta::OrderHeader> zamowienia = mKCPresta->pobierzZamowienia();
+        uint add = 0;
+        uint update = 0;
+        logDebug("Pobrano " + QString::number(zamowienia.size()) + QString::fromUtf8(" zamówień."));
+        for(int i=0; i<zamowienia.size(); ++i) {
+            uint id = zamowienia.at(i).id;
+            uint state = zamowienia.at(i).current_state;
+
+            if(mZamowieniaWidgetItem.contains(id)) {
+                if(mZamowieniaHeaders.value(id).current_state != state) {
+                    mZamowieniaWidgetItem.value(id)->setIcon(mZamowieniaIkony.value(mKCPresta->statusyZamowien(state)));
+                    ++update;
+                }
+            } else {
+                QListWidgetItem* item = new QListWidgetItem(mZamowieniaIkony.value(mKCPresta->statusyZamowien(state)), zamowienia.at(i).reference + "\t[" + zamowienia.at(i).date_add + "]", ui->listaZamowien);
+                mZamowieniaWidgetItem[id] = item;
+                ++add;
+            }
+            mZamowieniaHeaders[id] = zamowienia.at(i);
+        }
+        if(add > 0)
+            logNotice("Pobrano " + QString::number(add) + QString::fromUtf8(" nowych zamówień."));
+        if(update > 0)
+            logNotice(QString::fromUtf8("Na liście zaktualizowano ") + QString::number(update) + QString::fromUtf8(" zamówień."));
+    } catch (PSWebService::PrestaError e) {
+        logError(e);
+    } catch (PSWebService::OtherError e) {
+        logError(e);
     }
-    logDebug("asdasd asd asd ");
-    logDebug("asdsf dsf gdfgdfh fh");
-    logDebug("aaad ar er wert ert ert ");
+    updateTimer();
 }
 
 void MainWindow::updateTimer()
@@ -243,7 +276,7 @@ void MainWindow::showLog(QListWidgetItem *item)
 void MainWindow::clearLog()
 {
     ui->console->scrollToBottom();
-    while(ui->console->count() > mMaxLogMsgs) {
+    while((uint)ui->console->count() > mMaxLogMsgs) {
         QListWidgetItem* item = ui->console->takeItem(1);
         if(item) {
             mConsoleLog.remove(item);
@@ -252,4 +285,56 @@ void MainWindow::clearLog()
             break;
         }
     }
+}
+
+void MainWindow::updateZamowienia(KCPresta::ZamowienieStatus status)
+{
+    QList<QListWidgetItem*> selected = ui->listaZamowien->selectedItems();
+    uint update = 0;
+    for(int i=0; i<selected.size(); ++i) {
+        try {
+            uint id = mZamowieniaWidgetItem.key(selected.at(i));
+            uint state = mKCPresta->statusyZamowien(status);
+            if(mZamowieniaHeaders.value(id).current_state != state) {
+                Presta::Order order = mPresta->getOrder(id);
+                order.current_state = state;
+                mPresta->syncEdit(order);
+                mZamowieniaWidgetItem.value(id)->setIcon(mZamowieniaIkony.value(mKCPresta->statusyZamowien(state)));
+                Presta::OrderHeader header = mZamowieniaHeaders.value(id);
+                header.current_state = state;
+                mZamowieniaHeaders[id] = header;
+                ++update;
+            }
+
+        } catch (PSWebService::PrestaError e) {
+            logError(e);
+        } catch (PSWebService::OtherError e) {
+            logError(e);
+        }
+    }
+    if(update > 0) {
+        logNotice(QString::fromUtf8("Zmieniono stan ") + QString::number(update) + QString::fromUtf8(" zamówień na \"") + KCPresta::statusyZamowienNazwa(status) + "\"");
+    }
+    ui->listaZamowien->clearSelection();
+}
+
+void MainWindow::on_buttonDoRealizacji_clicked()
+{
+    updateZamowienia(KCPresta::W_REALIZACJI);
+}
+
+
+void MainWindow::on_buttonDoOdbioru_clicked()
+{
+    updateZamowienia(KCPresta::DO_ODBIORU);
+}
+
+void MainWindow::on_buttonRezygnacja_clicked()
+{
+    updateZamowienia(KCPresta::ANULOWANE);
+}
+
+void MainWindow::on_buttonZrealizowane_clicked()
+{
+    updateZamowienia(KCPresta::ZREALIZOWANE);
 }
