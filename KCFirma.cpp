@@ -17,14 +17,17 @@ KCFirma::KCFirma(QSettings &settings, QObject *parent) :
     mKCPosPath   = settings.value("BazaKCPos", QString("c:\\KCPos\\dane\\kasa.dan")).toString();
     mKCPosDB = QSqlDatabase::addDatabase("QODBC", "KCPos");
     mKCPosDB.setDatabaseName("DRIVER={Microsoft Access Driver (*.mdb)};"
-                               "Dbq=" + mKCPosPath);
+                             "Dbq=" + mKCPosPath);
     mKCPosDB.open();
 
-   //////////////////////////
-/*
-    if( (!mKCPosDB.isOpen()) || (!mKCFirmaDB.isOpen()) )
-        throw StackTrace(exception,"Blad otwierania bazy danych");
-*/
+    //////////////////////////
+
+    if( (!mKCPosDB.isOpen()) || (!mKCFirmaDB.isOpen()) ) {
+        Exception e;
+        e.type = QString::fromUtf8("Bląd otwierania bazy danych");
+        throw e;
+    }
+
     //wczytawna z configa miejscie w klasyfikacji w ktorym jest zapisany status towaru(czy do sprzedazy?)
     //i generowanie odpowiedniego wzoru do zapytania SQL
     //przykładowa klasyfikacja 006000000007002000000000000000
@@ -57,15 +60,23 @@ Kategoria KCFirma::kategoria(unsigned idKC) const {
 
 
     if(kcFirmaGrupa.next()){
-    kat.nazwa = kcFirmaGrupa.value(0).toString();
-    kat.idKC  = kcFirmaGrupa.value(1).toInt();
-    kat.id    = kcFirmaGrupa.value(2).toInt();
+        kat.nazwa = kcFirmaGrupa.value(0).toString();
+        kat.idKC  = kcFirmaGrupa.value(1).toInt();
+        kat.id    = kcFirmaGrupa.value(2).toInt();
     }
-    else;
-        //throw StackTrace(exception,"Brak Kategorii o podanym idKC");
+    else {
+        Exception e;
+        e.type = QString::fromUtf8("Błąd bazy danych");
+        e.msg = QString::fromUtf8("Brak Kategorii o podanym idKC");
+        throw e;
+    }
 
-   // if(kcFirmaGrupa.lastError().type() != QSqlError::NoError)
-     //   throw StackTrace(exception,"Blad zapytania" + kcFirmaGrupa.lastError().text());
+    if(kcFirmaGrupa.lastError().type() != QSqlError::NoError) {
+        Exception e;
+        e.type = QString::fromUtf8("Błąd bazy danych");
+        e.msg = kcFirmaGrupa.lastError().text();
+        throw e;
+    }
 
     return kat;
 }
@@ -162,7 +173,7 @@ bool KCFirma::produkty(QMap<unsigned, Produkt> &produktyMapa, unsigned ilosc)
 
     }
 
-   ///usuwanie produktow
+    ///usuwanie produktow
 
 
     for (int i = 0; i < listaProduktow.size(); i++)
@@ -173,10 +184,14 @@ bool KCFirma::produkty(QMap<unsigned, Produkt> &produktyMapa, unsigned ilosc)
     }
 
     bool tmp1 = mKCPosDB.commit();
-/*
-    if(mKCPosDB.lastError().type() != QSqlError::NoError)
-        throw StackTrace(exception,"Blad zapytania" + mKCPosDB.lastError().text());
-*/
+
+    if(mKCPosDB.lastError().type() != QSqlError::NoError) {
+        Exception e;
+        e.type = QString::fromUtf8("Błąd bazy danych");
+        e.msg = mKCPosDB.lastError().text();
+        throw e;
+    }
+
 
     return tmp1;
 }
@@ -197,12 +212,17 @@ void KCFirma::zmianaProduktu(unsigned id, unsigned idKC, float cena) {
                     "SET CenaPresta =" + QString::number(cena) + ", IDPresta = "+QString::number(id) + " " +
                     "WHERE IDKC =" +QString::number(idKC));
     }
-
     else{
         zmiana.exec("INSERT INTO PrestaTowary ( IDKC, IDPresta, CenaPresta) "
                     "VALUES (" + QString::number(idKC) +", " + QString::number(id) + ", " +
                     QString::number(cena)+ " )");
-    //    qDebug()<<zmiana.lastError().text();
+        //    qDebug()<<zmiana.lastError().text();
+    }
+    if(zmiana.lastError().type() != QSqlError::NoError) {
+        Exception e;
+        e.type = QString::fromUtf8("Błąd bazy danych");
+        e.msg = zmiana.lastError().text();
+        throw e;
     }
 
 }
@@ -229,6 +249,12 @@ void KCFirma::zmianaKategorii(unsigned idSprzedaz, unsigned idKatalog, unsigned 
     else{
         zmiana.exec("INSERT INTO PrestaKategorie ( IDGrupyKC, IDKategoriaPrestaSprzedaz ,IDKategoriaPrestaKatalog) "
                     "VALUES (" + QString::number(idKC) +", " + QString::number(idSprzedaz)+ ", " + QString::number(idKatalog)+  " )");
+    }
+    if(zmiana.lastError().type() != QSqlError::NoError) {
+        Exception e;
+        e.type = QString::fromUtf8("Błąd bazy danych");
+        e.msg = zmiana.lastError().text();
+        throw e;
     }
 }
 

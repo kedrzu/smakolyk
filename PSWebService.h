@@ -12,7 +12,6 @@
 #include <QDomDocument>
 #include <QVector>
 #include <QMap>
-#include "Config.h"
 #include "Exception.h"
 
 class PSWebService : public QObject

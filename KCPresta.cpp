@@ -130,7 +130,7 @@ void KCPresta::uploadProdukty() {
             // TODO Przydałoby sie zrobić kasowanie kategorii, jeżeli nie udało się poprawnie wysłać obu
             if(!err) {
                 // aktualizujemy powiązanie
-                mKCFirma->zmianaKategorii(/* idSprz, */ idKat, prod.kategoriaKC);
+                mKCFirma->zmianaKategorii(idSprz, idKat, prod.kategoriaKC);
             }
         }
         // jeżeli produkt ma już prawidłową kategorię, to dodajemy

@@ -20,7 +20,6 @@ SOURCES += main.cpp \
     Logger.cpp \
     KCFirma.cpp \
     Produkt.cpp \
-    Config.cpp \
     KCPresta.cpp \
     PrestaStructs.cpp \
     MainWindow.cpp \
@@ -34,7 +33,6 @@ HEADERS += \
     Produkt.h \
     Logger.h \
     KCFirma.h \
-    Config.h \
     Zamowienie.h \
     KCPresta.h \
     PrestaStructs.h \
