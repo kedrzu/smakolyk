@@ -8,7 +8,7 @@ Product::Product() :
     available_for_order(0),
     id_category_default(0),
     out_of_stock(2),
-    quantity(0),
+    //quantity(0),
     price(0)
 {}
 

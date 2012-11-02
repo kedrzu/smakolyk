@@ -1,4 +1,4 @@
-#include "KCFirma.h"
+﻿#include "KCFirma.h"
 #include <QDebug>
 
 KCFirma::KCFirma(QSettings &settings, QObject *parent) :
@@ -41,9 +41,6 @@ KCFirma::KCFirma(QSettings &settings, QObject *parent) :
     mWzorzecKlasyfikacjiKatalog  = mGenerujWzorzecKlasyfikacji(nrKlasyfikacjiKatalog.toInt(), wzorKlasyfikacjiKatalog);
     mWzorzecKlasyfikacjiWylacz   = mGenerujWzorzecKlasyfikacji(nrKlasyfikacjiWylacz.toInt(),  wzorKlasyfikacjiWylacz);
 
-    QMap<unsigned, Produkt> p;
-    produkty(p, 10);
-
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -56,7 +53,7 @@ Kategoria KCFirma::kategoria(unsigned idKC) const {
                       "WHERE KodGrupy='" + QString::number(idKC)+"'");
 
 
-    qDebug()<< "Blad zapytania:\t" << kcFirmaGrupa.lastError().text();
+    //qDebug()<< "Blad zapytania:\t" << kcFirmaGrupa.lastError().text();
     if(kcFirmaGrupa.next()){
     kat.nazwa = kcFirmaGrupa.value(0).toString();
     kat.idKC = kcFirmaGrupa.value(1).toInt();

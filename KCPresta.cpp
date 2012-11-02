@@ -362,8 +362,8 @@ Presta::Product KCPresta::kc2presta(const Produkt &produkt)
         product.reference.prepend("0");
     }
     product.link_rewrite = produkt.nazwa;
-    product.link_rewrite = product.link_rewrite.replace(" ", "-").toLower();
-
+    product.link_rewrite = product.link_rewrite.replace(" ", "-").replace(".", "").replace(",", "_").toLower();
+    qDebug()<<product.link_rewrite;
     // dodajemy kategorie, do których należy produkt
     if(mKatNadrzedne.contains(produkt.kategoria)) {
         product.id_category_default = produkt.kategoria;

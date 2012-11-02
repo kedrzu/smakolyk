@@ -46,7 +46,7 @@ QDomDocument Prestashop::toXML(const Product &product) {
         productElem.appendChild(buildXMLElement(doc, "id",  QString::number(product.id)));
     productElem.appendChild(buildXMLElement(doc, "price", QString::number(product.price)));
     productElem.appendChild(buildXMLElement(doc, "out_of_stock", QString::number(product.out_of_stock)));
-    productElem.appendChild(buildXMLElement(doc, "quantity", QString::number(product.quantity)));
+    //productElem.appendChild(buildXMLElement(doc, "quantity", QString::number(product.quantity)));
     productElem.appendChild(buildXMLElement(doc, "ean13", product.ean));
     productElem.appendChild(buildXMLElement(doc, "reference", product.reference));
     productElem.appendChild(buildXMLElement(doc, "active", QString::number(product.active)));
@@ -105,7 +105,7 @@ QNetworkReply *Prestashop::add(const Product &product) {
 
 void Prestashop::syncEdit(const Product &product) {
     QDomDocument doc = toXML(product);
-    qDebug() << doc.toByteArray();
+    //qDebug() << doc.toByteArray();
     PSWebService::Options opt;
     opt.id = product.id;
     opt.resource = "products";
@@ -371,7 +371,7 @@ QDomDocument Prestashop::toXML(const SpecificPrice &specificPrice)
     case SpecificPrice::PERCENTAGE: specific_price.appendChild(buildXMLElement(doc, "reduction_type", "percentage"));
     case SpecificPrice::AMOUNT: specific_price.appendChild(buildXMLElement(doc, "reduction_type", "amount"));
     }
-    qDebug() << doc.toByteArray();
+    //qDebug() << doc.toByteArray();
     return doc;
 }
 

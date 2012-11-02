@@ -16,7 +16,7 @@ struct Product {
     uint available_for_order;
     uint id_category_default;
     uint out_of_stock;
-    uint quantity;
+    //uint quantity;
     float price;
     QString reference;
     QString name;
