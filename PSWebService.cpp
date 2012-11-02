@@ -100,7 +100,9 @@ QDomDocument PSWebService::readReply(QNetworkReply *reply) {
     }
     // wystąpił błąd i zwrócony został komunikat błędu w XML
     else if(parsed) {
-        PrestaError exception(error);
+        PrestaError exception;
+        StackTrace(exception, "QDomDocument PSWebService::readReply(QNetworkReply *reply)");
+        exception.code = error;
         exception.url = reply->url();
         QDomElement prestashop = doc.firstChildElement("prestashop");
         QDomElement errorsElem = prestashop.firstChildElement("errors");
@@ -109,16 +111,17 @@ QDomDocument PSWebService::readReply(QNetworkReply *reply) {
             QPair<unsigned, QString> pair;
             pair.first = errorList.at(i).firstChildElement("code").firstChild().toCDATASection().nodeValue().toInt();
             pair.second = errorList.at(i).firstChildElement("message").firstChild().toCDATASection().nodeValue();
-            exception.msgs << pair;
+            exception.prestaMsgs << pair;
         }
         throw exception;
     }
     // nie udało się sparsować odpowiedzi XML
     else {
         OtherError exception;
+        StackTrace(exception, "QDomDocument PSWebService::readReply(QNetworkReply *reply)");
         exception.code = error;
         exception.url = reply->url();
-        exception.msg = QString(read);
+        exception.httpResponse = QString(read);
         throw exception;
     }
 }
@@ -130,4 +133,61 @@ QNetworkReply *PSWebService::syncReply(QNetworkReply *reply) {
         loop.exec();
     }
     return reply;
+}
+
+QString PSWebService::OtherError::toHtml()
+{
+    QString html = "<table cellspacing='5'>";
+    html.append(QString::fromUtf8("<tr><td><b>Wiadomość: </b></td><td>")+msg+"</td></tr>");
+    html.append(QString::fromUtf8("<tr><td><b>Kod błędu sieciowego:</b></td><td>")+QString::number(code)+"</td></tr>");
+    html.append(QString::fromUtf8("<tr><td><b>URL:</b></td><td>")+url.toString()+"</td></tr>");
+    html.append(QString::fromUtf8("<tr><td><b>Odpowiedź HTTP: </b></td><td>")+httpResponse+"</td></tr>");
+    html.append("</table>\n");
+    html.append(stackToHtml());
+    return html;
+}
+
+QString PSWebService::OtherError::toString()
+{
+    QString str;
+    str.append(QString::fromUtf8("Wiadomość:\t")+msg+"\n");
+    str.append(QString::fromUtf8("Kod błędu sieciowego:\t")+QString::number(code)+"\n");
+    str.append(QString::fromUtf8("URL:\t")+url.toString()+"\n");
+    str.append(QString::fromUtf8("Odpowiedź HTTP: \n")+httpResponse + "\n");
+    str.append(stackToString());
+    return str;
+}
+
+QString PSWebService::PrestaError::toHtml()
+{
+    QString html = "<table cellspacing='5'>";
+    html.append(QString::fromUtf8("<tr><td><b>Wiadomość: </b></td><td>")+msg+"</td></tr>");
+    html.append(QString::fromUtf8("<tr><td><b>Kod błędu sieciowego:</b></td><td>")+QString::number(code)+"</td></tr>");
+    html.append(QString::fromUtf8("<tr><td><b>URL:</b></td><td>")+url.toString()+"</td></tr>");
+    html.append("</table>\n\n");
+    html.append("<table cellspacing='5'>");
+    html.append(QString::fromUtf8("<tr><td colspan=2>Błędy Prestashop</td></tr>"));
+    for(int i=0; i<prestaMsgs.size(); ++i) {
+        html.append(QString::fromUtf8("<tr><td><b>Kod:</b></td><td>")+QString::number(prestaMsgs.at(i).first)+"</td></tr>");
+        html.append(QString::fromUtf8("<tr><td><b>Komunikat:</b></td><td>")+prestaMsgs.at(i).second+"</td></tr>");
+    }
+    html.append("</table>\n");
+    html.append(stackToHtml());
+    return html;
+}
+
+QString PSWebService::PrestaError::toString()
+{
+    QString str;
+    str.append(QString::fromUtf8("Wiadomość:\t")+msg+"\n");
+    str.append(QString::fromUtf8("Kod błędu sieciowego:\t")+QString::number(code)+"\n");
+    str.append(QString::fromUtf8("URL:\t")+url.toString()+"\n\n");
+    str.append(QString::fromUtf8("Błędy Prestashop: \n"));
+    for(int i=0; i<prestaMsgs.size(); ++i) {
+        str.append(QString::fromUtf8("Kod:\t")+QString::number(prestaMsgs.at(i).first)+"\n");
+        str.append(QString::fromUtf8("Komunikat:\t")+prestaMsgs.at(i).second+"\n");
+    }
+
+    str.append(stackToString());
+    return str;
 }

@@ -40,8 +40,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(mKCPresta, SIGNAL(warning(QString)), this, SLOT(logWarning(QString)));
     connect(mKCPresta, SIGNAL(notice(QString)), this, SLOT(logNotice(QString)));
     connect(mKCPresta, SIGNAL(debug(QString)), this, SLOT(logDebug(QString)));
-    connect(mKCPresta, SIGNAL(error(PSWebService::PrestaError)), this, SLOT(logError(PSWebService::PrestaError)));
-    connect(mKCPresta, SIGNAL(error(PSWebService::OtherError)), this, SLOT(logError(PSWebService::OtherError)));
+    connect(mKCPresta, SIGNAL(error(Exception)), this, SLOT(logError(Exception)));
 
     // ikony zamówień
     mZamowieniaIkony[KCPresta::OCZEKUJE] = QIcon(":/icons/clock.png");
@@ -115,6 +114,8 @@ void MainWindow::wyslijTowary()
         if(mKCPresta->buforProduktow().empty()) {
             logNotice(QString::fromUtf8("Brak towarów do wysłania"));
         } else {
+            // licznik błędów
+            uint errors = 0;
             logNotice(QString::fromUtf8("Wysyłam towary"));
             mKCPresta->aktualizujKategorie();
             uint liczbaProduktow = mKCPresta->buforProduktow().size();
@@ -125,12 +126,20 @@ void MainWindow::wyslijTowary()
                     QObject::connect(mKCPresta, SIGNAL(uploadFinished()), &loop, SLOT(quit()));
                     loop.exec();
                 };
+                logDebug(QString::fromUtf8("Wysłano ").append(QString::number(liczbaProduktow)).append(QString::fromUtf8(" towarów")));
                 if(mKCPresta->buforProduktow().size() > 0) {
                     logWarning(QString::fromUtf8("Nie udało się wysłać ").append(QString::number(mKCPresta->buforProduktow().size())).append(QString::fromUtf8(" towarów")));
+                    ++errors;
+                } else {
+                    errors = 0;
+                }
+                // jeżeli nie uda się wysłać kilka razy pod rząd, to operacja jest przerywana
+                if(errors == 3) {
+                    logWarning(QString::fromUtf8("Przerwano wysyłanie towarów z powodu powtarzających się błędów"));
+                    break;
                 }
                 mKCPresta->dodajProdukty();
                 liczbaProduktow += mKCPresta->buforProduktow().size();
-                logDebug(QString::fromUtf8("Wysłano ").append(QString::number(liczbaProduktow)).append(QString::fromUtf8(" towarów")));
             } while (!mKCPresta->buforProduktow().empty());
             logNotice(QString::fromUtf8("Wysłano ").append(QString::number(liczbaProduktow)).append(QString::fromUtf8(" towarów")));
         }
@@ -170,9 +179,8 @@ void MainWindow::pobierzZamowienia()
             logNotice("Pobrano " + QString::number(add) + QString::fromUtf8(" nowych zamówień."));
         if(update > 0)
             logNotice(QString::fromUtf8("Na liście zaktualizowano ") + QString::number(update) + QString::fromUtf8(" zamówień."));
-    } catch (PSWebService::PrestaError e) {
-        logError(e);
-    } catch (PSWebService::OtherError e) {
+    } catch (Exception& e) {
+        StackTrace(e, "void MainWindow::pobierzZamowienia()");
         logError(e);
     }
     updateTimer();
@@ -208,38 +216,11 @@ void MainWindow::koniec()
     close();
 }
 
-void MainWindow::logError(const PSWebService::PrestaError &err)
+void MainWindow::logError(const Exception &err)
 {
     QString msg = QString::fromUtf8("Wystąpił błąd podczas błędu");
     QListWidgetItem* item = new QListWidgetItem(QIcon(":/icons/exclamation.png"), QTime::currentTime().toString("[HH:mm:ss] ")+msg, ui->console);
-    QString log = "<table cellspacing='5'>";
-    log.append(QString::fromUtf8("<tr><td><b>Typ wiadomości:</b></td><td>Błąd Prestashop</td></tr>"));
-    log.append(QString::fromUtf8("<tr><td><b>Wykonywana akcja:</b></td><td>")+err.msg+"</td></tr>");
-    log.append(QString::fromUtf8("<tr><td><b>Kod błędu sieciowego:</b></td><td>")+QString::number(err.code)+"</td></tr>");
-    log.append(QString::fromUtf8("<tr><td><b>URL:</b></td><td>")+err.url.toString()+"</td></tr>");
-    log.append("</table>\n");
-    for(int i=0; i<err.msgs.size(); ++i) {
-        log.append("<table cellspacing='5'>");
-        log.append(QString::fromUtf8("<tr><td><b>Kod błedu Prestashop:</b></td><td>")+QString::number(err.msgs.at(i).first)+"</td></tr>");
-        log.append(QString::fromUtf8("<tr><td><b>Komunikat:</b></td><td>")+err.msgs.at(i).second+"</td></tr>");
-        log.append("</table>\n");
-    }
-    mConsoleLog[item] = log;
-    clearLog();
-}
-
-void MainWindow::logError(const PSWebService::OtherError &err)
-{
-    QString msg = QString::fromUtf8("Wystąpił błąd podczas błędu");
-    QListWidgetItem* item = new QListWidgetItem(QIcon(":/icons/exclamation.png"), QTime::currentTime().toString("[HH:mm:ss] ")+msg, ui->console);
-    QString log = "<table cellspacing='5'>";
-    log.append(QString::fromUtf8("<tr><td><b>Typ wiadomości:</b></td><td>Nieznany błąd</td></tr>"));
-    log.append(QString::fromUtf8("<tr><td><b>Wykonywana akcja:</b></td><td>")+err.msg+"</td></tr>");
-    log.append(QString::fromUtf8("<tr><td><b>Kod błędu sieciowego:</b></td><td>")+QString::number(err.code)+"</td></tr>");
-    log.append(QString::fromUtf8("<tr><td><b>URL:</b></td><td>")+err.url.toString()+"</td></tr>");
-    log.append("</table>\n");
-    mConsoleLog[item] = log;
-
+    mConsoleLog[item] = err.toHtml();
     clearLog();
 }
 

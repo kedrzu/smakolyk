@@ -20,8 +20,7 @@ public:
     ~MainWindow();
 
 public slots:
-    void logError(const PSWebService::PrestaError& err);
-    void logError(const PSWebService::OtherError& err);
+    void logError(const Exception& err);
     void logDebug(const QString& msg);
     void logWarning(const QString& msg);
     void logNotice(const QString& msg);

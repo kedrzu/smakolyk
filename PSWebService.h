@@ -13,6 +13,7 @@
 #include <QVector>
 #include <QMap>
 #include "Config.h"
+#include "Exception.h"
 
 class PSWebService : public QObject
 {
@@ -29,23 +30,20 @@ public:
         Options() : id(-1), limit(-1) {}
     };
 
-    struct PrestaError {
+    struct OtherError : public Exception {
         QNetworkReply::NetworkError code;
         QUrl url;
-        QVector<QPair<unsigned, QString> > msgs;
-        QString msg;
-        PrestaError(const QNetworkReply::NetworkError& code)
-            : code(code) {}
-        PrestaError() {}
+        QString httpResponse;
+        virtual QString toHtml();
+        virtual QString toString();
     };
 
-    struct OtherError {
+    struct PrestaError : public Exception {
         QNetworkReply::NetworkError code;
         QUrl url;
-        QString msg;
-        OtherError(QNetworkReply::NetworkError code, const QUrl& url, QString msg) :
-            code(code), url(url), msg(msg) {}
-        OtherError() {}
+        QVector<QPair<unsigned, QString> > prestaMsgs;
+        virtual QString toHtml();
+        virtual QString toString();
     };
 
     PSWebService(QString url, QString key);

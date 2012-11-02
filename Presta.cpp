@@ -377,20 +377,14 @@ QDomDocument Prestashop::toXML(const SpecificPrice &specificPrice)
 
 Order Prestashop::getOrder(uint id)
 {
-    try {
-        PSWebService::Options opt;
-        opt.resource = "orders";
-        opt.id = id;
-        QDomDocument doc = mPSWebService->syncGet(opt);
-        Order order = getOrder(doc);
-        return order;
-    } catch (PSWebService::PrestaError e) {
-        e.msg = "zamowienie(uint id)";
-        throw e;
-    } catch (PSWebService::OtherError e) {
-        e.msg = "zamowienie(uint id)";
-        throw e;
-    }
+    StackTraceBegin();
+    PSWebService::Options opt;
+    opt.resource = "orders";
+    opt.id = id;
+    QDomDocument doc = mPSWebService->syncGet(opt);
+    Order order = getOrder(doc);
+    return order;
+    StackTraceEnd("Order Prestashop::getOrder(uint id)");
 }
 
 QList<OrderHeader> Prestashop::getOrderHeader(const QMap<QString, QString> &filter)

@@ -18,41 +18,35 @@ KCPresta::KCPresta(const QSettings& settings, Prestashop *presta, KCFirma *kcFir
 
 void KCPresta::aktualizujKategorie()
 {
+    StackTraceBegin();
     // najpierw ściągamy kategorie z internetu
     emit debug("KCPresta::aktualizujKategorie()");
     PSWebService::Options opt;
     opt.resource = "categories";
     opt.display = "[id,id_parent,active,name,link_rewrite,meta_title,meta_description,meta_keywords,description]";
-    try {
-        QDomDocument result = mPSWebService->syncGet(opt);
-        QDomElement prestashop = result.firstChildElement("prestashop");
-        if(!prestashop.isNull()) {
-            QDomElement categories = prestashop.firstChildElement("categories");
-            if(!categories.isNull()) {
-                // czyścimy starą mapę
-                mKatNadrzedne.clear();
-                // pobieramy kategorie
-                QDomNodeList cats = categories.elementsByTagName("category");
-                for(int i=0; i<cats.size(); ++i) {
-                    QDomNode cat = cats.at(i);
-                    if(!cat.isNull() && cat.hasChildNodes()) {
-                        unsigned id = cat.firstChildElement("id").firstChild().toCDATASection().nodeValue().toUInt();
-                        unsigned nadrzedna = cat.firstChildElement("id_parent").firstChild().toCDATASection().nodeValue().toUInt();
-                        mKatNadrzedne[id] = nadrzedna;
-                    }
+    QDomDocument result = mPSWebService->syncGet(opt);
+    QDomElement prestashop = result.firstChildElement("prestashop");
+    if(!prestashop.isNull()) {
+        QDomElement categories = prestashop.firstChildElement("categories");
+        if(!categories.isNull()) {
+            // czyścimy starą mapę
+            mKatNadrzedne.clear();
+            // pobieramy kategorie
+            QDomNodeList cats = categories.elementsByTagName("category");
+            for(int i=0; i<cats.size(); ++i) {
+                QDomNode cat = cats.at(i);
+                if(!cat.isNull() && cat.hasChildNodes()) {
+                    unsigned id = cat.firstChildElement("id").firstChild().toCDATASection().nodeValue().toUInt();
+                    unsigned nadrzedna = cat.firstChildElement("id_parent").firstChild().toCDATASection().nodeValue().toUInt();
+                    mKatNadrzedne[id] = nadrzedna;
                 }
-            } else {
-                // TODO łapanie błedów
             }
+        } else {
+            // TODO łapanie błedów
         }
-        emit debug(QString::fromUtf8("Pobrano ").append(QString::number(mKatNadrzedne.size())).append(" kategorii."));
-    } catch (PSWebService::PrestaError e) {
-        emit error(e);
-        throw e;
-    } catch (PSWebService::OtherError e) {
-        emit error(e);
-        throw e;
     }
+    emit debug(QString::fromUtf8("Pobrano ").append(QString::number(mKatNadrzedne.size())).append(" kategorii."));
+    StackTraceEnd("void KCPresta::aktualizujKategorie()");
 }
 
 bool KCPresta::dodajProdukty()
@@ -109,10 +103,8 @@ void KCPresta::uploadProdukty() {
                 // aktualizujemy powiązanie
                 mKCFirma->zmianaKategorii(id, prod.kategoriaKC);
                 mKatNadrzedne[id] = category.id_parent;
-            } catch (PSWebService::PrestaError e) {
-                emit error(e);
-                err = true;
-            } catch (PSWebService::OtherError e) {
+            } catch (Exception& e) {
+                StackTrace(e, "void KCPresta::uploadProdukty()");
                 emit error(e);
                 err = true;
             }
@@ -273,12 +265,8 @@ void KCPresta::productAdded(QNetworkReply *reply)
         // TODO przechwytywanie wyjątków z bazy danych
         mKCFirma->zmianaProduktu(id, idKC, prod.cenaPresta);
         mProdukty.remove(idKC);
-    } catch (PSWebService::PrestaError e) {
-        e.msg = "productAdded()";
-        mProduktyError[idKC] = ADD_ERROR;
-        emit error(e);
-    } catch (PSWebService::OtherError e) {
-        e.msg = "productAdded()";
+    } catch (Exception& e) {
+        StackTrace(e, "void KCPresta::productAdded(QNetworkReply *reply)");
         mProduktyError[idKC] = ADD_ERROR;
         emit error(e);
     }
@@ -311,12 +299,8 @@ void KCPresta::productEdited(QNetworkReply *reply)
         // TODO przechwytywanie wyjątków z bazy danych
         mKCFirma->zmianaProduktu(id, idKC, prod.cenaPresta);
         mProdukty.remove(idKC);
-    } catch (PSWebService::PrestaError e) {
-        e.msg = "void KCPresta::productEdited(QNetworkReply *reply)";
-        mProduktyError[idKC] = EDIT_ERROR;
-        emit error(e);
-    } catch (PSWebService::OtherError e) {
-        e.msg = "void KCPresta::productEdited(QNetworkReply *reply)";
+    } catch (Exception& e) {
+        StackTrace(e, "void KCPresta::productEdited(QNetworkReply *reply)");
         mProduktyError[idKC] = EDIT_ERROR;
         emit error(e);
     }
@@ -395,7 +379,7 @@ Presta::Category KCPresta::kc2presta(const Kategoria &kategoria)
     category.id_parent = 1;
     category.name = kategoria.nazwa;
     category.link_rewrite = kategoria.nazwa;
-    category.link_rewrite = category.link_rewrite.replace(" ", "-").toLower();
+    category.link_rewrite = category.link_rewrite.replace(" ", "-").replace(",", "_").remove(QRegExp("[^A-Za-z0-9_-]")).toLower();
     return category;
 }
 
@@ -410,12 +394,12 @@ QString KCPresta::statusyZamowienNazwa(ZamowienieStatus status)
 {
     QString result;
     switch(status) {
-        case KCPresta::OCZEKUJE: result=QString::fromUtf8("Oczekujące"); break;
-        case KCPresta::W_REALIZACJI: result=QString::fromUtf8("W realizacji"); break;
-        case KCPresta::DO_ODBIORU: result=QString::fromUtf8("Do odbioru"); break;
-        case KCPresta::WYSLANE: result=QString::fromUtf8("Wysłane"); break;
-        case KCPresta::ZREALIZOWANE: result=QString::fromUtf8("Zrealizowane"); break;
-        case KCPresta::ANULOWANE: result=QString::fromUtf8("Anulowane"); break;
+    case KCPresta::OCZEKUJE: result=QString::fromUtf8("Oczekujące"); break;
+    case KCPresta::W_REALIZACJI: result=QString::fromUtf8("W realizacji"); break;
+    case KCPresta::DO_ODBIORU: result=QString::fromUtf8("Do odbioru"); break;
+    case KCPresta::WYSLANE: result=QString::fromUtf8("Wysłane"); break;
+    case KCPresta::ZREALIZOWANE: result=QString::fromUtf8("Zrealizowane"); break;
+    case KCPresta::ANULOWANE: result=QString::fromUtf8("Anulowane"); break;
     }
     return result;
 }

@@ -24,7 +24,8 @@ SOURCES += main.cpp \
     KCPresta.cpp \
     PrestaStructs.cpp \
     MainWindow.cpp \
-    ConsoleDialog.cpp
+    ConsoleDialog.cpp \
+    Exception.cpp
 
 HEADERS += \
     PSWebService.h \
@@ -38,7 +39,8 @@ HEADERS += \
     KCPresta.h \
     PrestaStructs.h \
     MainWindow.h \
-    ConsoleDialog.h
+    ConsoleDialog.h \
+    Exception.h
 
 FORMS += \
     MainWindow.ui \

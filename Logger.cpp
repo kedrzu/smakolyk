@@ -13,13 +13,13 @@ Logger::Logger(KCPresta *presta, QObject *parent) :
 void Logger::logError(PSWebService::PrestaError e)
 {
     qDebug() << "NETWORK ERROR - KOD: " << e.code;
-    for(int i=0; i<e.msgs.size(); ++i) {
-        qDebug() << "PRESTA ERROR: [" << e.msgs.at(i).first << "] " << e.msgs.at(i).second;
+    for(int i=0; i<e.prestaMsgs.size(); ++i) {
+        qDebug() << "PRESTA ERROR: [" << e.prestaMsgs.at(i).first << "] " << e.prestaMsgs.at(i).second;
     }
 }
 
 void Logger::logError(PSWebService::OtherError e)
 {
     qDebug() << "NETWORK ERROR: [" << e.code << "] url: " << e.url.toString();
-    qDebug() << e.msg;
+    qDebug() << e.httpResponse;
 }

@@ -27,12 +27,13 @@ struct Produkt {
     uint idKC; /*!< [DODAJ][EDYTUJ] Id produktu w KC-Firma. */
     float cenaPresta; /*!< [DODAJ][EDYTUJ] */
     float cenaKC; /*!< [DODAJ][EDYTUJ] */
-    uint kategoria; /*!< [EDYTUJ] Numer grupy w Prestashop  */
+    uint kategoria; /*!< [EDYTUJ] Numer grupy do sprzedaÅ¼y w Prestashop  */
+    uint kategoriaKatalog;  /*!< Numer grupy katalogowej w Presta*/
     uint kategoriaKC; /*!< [DODAJ][EDYTUJ] Numer grupy w KC-Firma */
     QString nazwa; /*!< [DODAJ][EDYTUJ] Nazwa produktu */
     QString ean; /*!< [DODAJ][EDYTUJ] Kod kreskowy */
     QString opis; /*!< Olej to. */
-    QString krotkiOpis; /*!< [DODAJ][EDYTUJ] Wpisz tutaj w³aœciwoœci typu gramatura itp. */
+    QString krotkiOpis; /*!< [DODAJ][EDYTUJ] Wpisz tutaj wÅ‚aÅ›ciwoÅ›ci typu gramatura itp. */
 
 /*!
  \brief

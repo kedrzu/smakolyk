@@ -87,17 +87,11 @@ signals:
     */
     void uploadFinished();
     /*!
-     \brief Wystapienie bledu komunikacji z Presta z odpowiednimi danymi.
+     \brief Wystapienie bledu
 
      \param err
     */
-    void error(const PSWebService::PrestaError& err);
-    /*!
-     \brief Wystapienie innego bledu (nie z Presta)
-
-     \param err
-    */
-    void error(const PSWebService::OtherError& err);
+    void error(const Exception& err);
     /*!
      \brief Informacja do debugu programu.
 
