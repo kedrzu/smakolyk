@@ -6,7 +6,9 @@ KCPresta::KCPresta(const QSettings& settings, Prestashop *presta, KCFirma *kcFir
     mKCFirma(kcFirma),
     mPSWebService(presta->getWebService()),
     mUploadFinished(true),
-    mProduktyUpload(settings.value("KC-Presta/produkty_upload").toUInt())
+    mProduktyUpload(settings.value("KC-Presta/produkty_upload").toUInt()),
+    mConfigKatRootSprzedaz(settings.value("kategorie/root_sprzedaz", "1").toUInt()),
+    mConfigKatRootKatalog(settings.value("kategorie/root_sprzedaz", "2").toUInt())
 {
     mStatusyZamowien[OCZEKUJE] = settings.value("zamowienia/oczekuje").toUInt();
     mStatusyZamowien[W_REALIZACJI] = settings.value("zamowienia/w_realizacji").toUInt();
@@ -88,25 +90,47 @@ void KCPresta::uploadProdukty() {
         return;
     }
 
-    foreach(const Produkt& prod, mProdukty) {
+    foreach(const Produkt& produkt, mProdukty) {
         // jeżeli wystąpi błąd przy dodawaniu kategorii, to nie dodajemy produktu
         bool err = false;
-        // kategoria jest produktu nowa, lub była w Presta ale już jej nie ma => dodajemy do Presta
-        if(prod.kategoria == 0 || !mKatNadrzedne.contains(prod.kategoria)) {
+        Produkt prod = produkt;
+        // kategoria produktu jest nowa, lub była w Presta ale już jej nie ma => dodajemy do Presta
+        bool dodajKatSprz = (prod.kategoria == 0 || !mKatNadrzedne.contains(prod.kategoria)) && prod.status != Produkt::KATALOG;
+        bool dodajKatKata = prod.kategoriaKatalog == 0 || !mKatNadrzedne.contains(prod.kategoriaKatalog);
+        if(dodajKatSprz || dodajKatKata) {
             Kategoria kat = mKCFirma->kategoria(prod.kategoriaKC);
             kat.id = 0;
             // dodajemy kategorię, jeżeli sie nie uda emitujemy blad i kontynujemy z nastepnym produktem
+            uint idSprz = 0;
             try {
-                // kategoria dodawana jest synchronicznie
-                Category category = kc2presta(kat);
-                unsigned id = mPresta->syncAdd(category);
-                // aktualizujemy powiązanie
-                mKCFirma->zmianaKategorii(id, prod.kategoriaKC);
-                mKatNadrzedne[id] = category.id_parent;
+                // kategoria sprzedaży dodawana jest synchronicznie
+                Category categorySprzedaz = kc2presta(kat);
+                categorySprzedaz.id_parent = mConfigKatRootSprzedaz;
+                idSprz = mPresta->syncAdd(categorySprzedaz);
+                mKatNadrzedne[idSprz] = categorySprzedaz.id_parent;
             } catch (Exception& e) {
                 StackTrace(e, "void KCPresta::uploadProdukty()");
                 emit error(e);
                 err = true;
+            }
+            uint idKat = 0;
+            if(!err) {
+                try {
+                    // kategoria katalogu dodawana jest synchronicznie
+                    Category categoryKatalog = kc2presta(kat);
+                    categoryKatalog.id_parent = mConfigKatRootKatalog;
+                    idKat = mPresta->syncAdd(categoryKatalog);
+                    mKatNadrzedne[idKat] = categoryKatalog.id_parent;
+                } catch (Exception& e) {
+                    StackTrace(e, "void KCPresta::uploadProdukty()");
+                    emit error(e);
+                    err = true;
+                }
+            }
+            // TODO Przydałoby sie zrobić kasowanie kategorii, jeżeli nie udało się poprawnie wysłać obu
+            if(!err) {
+                // aktualizujemy powiązanie
+                mKCFirma->zmianaKategorii(/* idSprz, */ idKat, prod.kategoriaKC);
             }
         }
         // jeżeli produkt ma już prawidłową kategorię, to dodajemy
@@ -138,77 +162,6 @@ void KCPresta::uploadProdukty() {
             mProduktyError[prod.idKC] = KATEGORIA;
         }
     }
-
-
-    //    // iterujemy po produktach do aktualizacji
-    //    QMapIterator<unsigned, Produkt> it(mProdukty);
-    //    while(it.hasNext()) {
-    //        it.next();
-    //        // jeżeli wystąpi błąd przy dodawaniu kategorii, to nie dodajemy produktu
-    //        bool err = false;
-    //        // kategoria jest produktu nowa, lub była w Presta ale już jej nie ma => dodajemy do Presta
-    //        if(it.value().kategoria == 0 || !mKatNadrzedne.contains(it.value().kategoria)) {
-    //            Kategoria kat = mKCFirma->kategoria(it.value().kategoriaKC);
-    //            kat.id = 0;
-    //            // dodajemy kategorię, jeżeli sie nie uda emitujemy blad i kontynujemy z nastepnym produktem
-    //            try {
-    //                // kategoria dodawana jest synchronicznie
-    //                unsigned id = mPresta->syncAdd(kat);
-    //                // aktualizujemy powiązanie
-    //                emit zmianaKategorii(id, it.value().kategoriaKC);
-    //                mKatNadrzedne[id] = kat.nadrzedna;
-    //            } catch (PSWebService::PrestaError e) {
-    //                emit error(e);
-    //                err = true;
-    //            } catch (PSWebService::OtherError e) {
-    //                emit error(e);
-    //                err = true;
-    //            }
-    //        }
-    //        // jeżeli produkt ma już prawidłową kategorię, to dodajemy
-    //        if(!err) {
-
-    //            // dodajemy kategorie, do których należy produkt
-    //            unsigned cat = it.value().kategoria;
-    //            unsigned i = 0;
-    //            do {
-    //                i++;
-    //                it.value().kategorie << cat;
-
-    //                if(mKatNadrzedne.contains(cat)) {
-    //                    cat = mKatNadrzedne[cat];
-    //                } else {
-    //                    break;
-    //                }
-
-    //                if(i>100) throw std::string("chujnia!");
-    //            } while(cat > 0);
-
-    //            // jeżeli produkt jest w bazie => edytujemy
-    //            if(it.value().id > 0) {
-    //                QNetworkReply* reply = mPresta->edit(it.value());
-    //                if(reply->isFinished()) {
-    //                    productEdited(reply);
-    //                } else {
-    //                    connect(reply, SIGNAL(finished()), this, SLOT(productEdited()));
-    //                }
-    //            }
-    //            // jeżeli nie, dodajemy
-    //            else {
-    //                QNetworkReply* reply = mPresta->add(it.value());
-    //                if(reply->isFinished()) {
-    //                    productAdded(reply);
-    //                } else {
-    //                    connect(reply, SIGNAL(finished()), this, SLOT(productAdded()));
-    //                }
-    //            }
-    //        }
-    //        // w przeciwnym wypadku oznaczamy produkt jako błędnie uploadowany
-    //        else {
-    //            mProduktyError[it.value().idKC] = KATEGORIA;
-    //        }
-    //    }
-
 }
 
 void KCPresta::categoryAdded()
@@ -262,10 +215,16 @@ void KCPresta::productAdded(QNetworkReply *reply)
         const Produkt& prod = mProdukty.value(idKC);
         Presta::SpecificPrice sp = getSpecificPrice(prod);
         mPresta->syncAdd(sp);
-        // TODO przechwytywanie wyjątków z bazy danych
-        mKCFirma->zmianaProduktu(id, idKC, prod.cenaPresta);
-        mProdukty.remove(idKC);
+        try {
+            mKCFirma->zmianaProduktu(id, idKC, prod.cenaPresta);
+            mProdukty.remove(idKC);
+        } catch (Exception& e) {
+            // jeżeli został zwrócony jakiś inny wyjątek, np z bazy danych, to należy produkt usunąć z presta
+            mPresta->syncDeleteProduct(id);
+            throw;
+        }
     } catch (Exception& e) {
+        // jeżeli został zwrócony jakiś inny wyjątek, np z bazy danych, to należy produkt usunąć z presta
         StackTrace(e, "void KCPresta::productAdded(QNetworkReply *reply)");
         mProduktyError[idKC] = ADD_ERROR;
         emit error(e);
@@ -296,7 +255,6 @@ void KCPresta::productEdited(QNetworkReply *reply)
         } else {
             mPresta->syncAdd(sp);
         }
-        // TODO przechwytywanie wyjątków z bazy danych
         mKCFirma->zmianaProduktu(id, idKC, prod.cenaPresta);
         mProdukty.remove(idKC);
     } catch (Exception& e) {
@@ -349,7 +307,24 @@ Presta::Product KCPresta::kc2presta(const Produkt &produkt)
     product.link_rewrite = product.link_rewrite.replace(" ", "-").replace(".", "").replace(",", "_").toLower();
     qDebug()<<product.link_rewrite;
     // dodajemy kategorie, do których należy produkt
-    if(mKatNadrzedne.contains(produkt.kategoria)) {
+    if(produkt.kategoriaKatalog > 0 && mKatNadrzedne.contains(produkt.kategoriaKatalog)) {
+        product.id_category_default = produkt.kategoriaKatalog;
+        unsigned cat = produkt.kategoriaKatalog;
+        unsigned i = 0;
+        do {
+            i++;
+            product.categories << cat;
+
+            if(mKatNadrzedne.contains(cat)) {
+                cat = mKatNadrzedne[cat];
+            } else {
+                break;
+            }
+
+            if(i>100) throw std::string("chujnia!");
+        } while(cat > 0);
+    }
+    if(produkt.kategoria > 0 && produkt.status != Produkt::KATALOG && mKatNadrzedne.contains(produkt.kategoria)) {
         product.id_category_default = produkt.kategoria;
         unsigned cat = produkt.kategoria;
         unsigned i = 0;

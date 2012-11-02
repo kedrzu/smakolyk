@@ -25,6 +25,9 @@ public:
     QNetworkReply *add(const Product& product);
     QNetworkReply *add(const Category& kategoria);
     QNetworkReply *add(const SpecificPrice& specificPrice);
+    QNetworkReply *deleteProduct(uint id);
+    QNetworkReply *deleteCategory(uint id);
+    QNetworkReply *deleteSpecificPrice(uint id);
     QNetworkReply *edit(const Product& product);
     QNetworkReply *edit(const Category& kategoria);
     QNetworkReply *edit(const SpecificPrice& specificPrice);
@@ -83,6 +86,11 @@ public:
      \return unsigned
     */
     void syncAdd(const SpecificPrice& specificPrice);
+
+    void syncDeleteProduct(uint id);
+    void syncDeleteCategory(uint id);
+    void syncDeleteSpecificPrice(uint id);
+
     /*!
      \brief Synchroniczna edycja produktu w Presta
 

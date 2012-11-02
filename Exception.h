@@ -29,12 +29,15 @@ public:
             name(name), file(file), line(line) {}
     };
 
+    QString type;
     QString msg;
     QList<StackTraceItem> stack;
 
     Exception();
     virtual QString toHtml() const;
     virtual QString toString() const;
+    QString headerToHtml() const;
+    QString headerToString() const;
     QString stackToHtml() const;
     QString stackToString() const;
     void pushStackTrace(QString name, QString file, uint line);

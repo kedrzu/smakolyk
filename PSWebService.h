@@ -30,27 +30,28 @@ public:
         Options() : id(-1), limit(-1) {}
     };
 
-    struct OtherError : public Exception {
+    struct NetworkError : public Exception {
         QNetworkReply::NetworkError code;
         QUrl url;
-        QString httpResponse;
-        virtual QString toHtml();
-        virtual QString toString();
+        virtual QString toHtml() const;
+        virtual QString toString() const;
+        QString networkErrorToHtml() const;
+        QString networkErrorToString() const;
     };
 
-    struct PrestaError : public Exception {
-        QNetworkReply::NetworkError code;
-        QUrl url;
+    struct PrestaError : public NetworkError {
         QVector<QPair<unsigned, QString> > prestaMsgs;
-        virtual QString toHtml();
-        virtual QString toString();
+        virtual QString toHtml() const;
+        virtual QString toString() const;
     };
 
     PSWebService(QString url, QString key);
     ~PSWebService();
+    QNetworkReply *del(const Options& options);
     QNetworkReply *get(const Options& options);
     QNetworkReply *post(const Options &options, const QDomDocument& xml);
     QNetworkReply *put(const Options &options, const QDomDocument& xml);
+    QDomDocument syncDel(const Options& options);
     QDomDocument syncGet(const Options& options);
     QDomDocument syncPost(const Options &options, const QDomDocument& xml);
     QDomDocument syncPut(const Options & options, const QDomDocument& xml);

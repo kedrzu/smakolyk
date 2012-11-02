@@ -82,7 +82,9 @@ QDomDocument Prestashop::toXML(const Product &product) {
     return doc;
 }
 
-QNetworkReply *Prestashop::edit(const Product &product) {
+QNetworkReply *Prestashop::edit(const Product &product)
+{
+    StackTraceBegin();
     QDomDocument doc = toXML(product);
     //qDebug() << doc.toByteArray();
     PSWebService::Options opt;
@@ -91,9 +93,12 @@ QNetworkReply *Prestashop::edit(const Product &product) {
     QNetworkReply* reply = mPSWebService->put(opt, doc);
     reply->setProperty("idRef", QVariant(product.idRef));
     return reply;
+    StackTraceEnd("QNetworkReply *Prestashop::edit(const Product &product)");
 }
 
-QNetworkReply *Prestashop::add(const Product &product) {
+QNetworkReply *Prestashop::add(const Product &product)
+{
+    StackTraceBegin();
     QDomDocument doc = toXML(product);
     //qDebug() << doc.toByteArray();
     PSWebService::Options opt;
@@ -101,27 +106,35 @@ QNetworkReply *Prestashop::add(const Product &product) {
     QNetworkReply* reply = mPSWebService->post(opt, doc);
     reply->setProperty("idRef", QVariant(product.idRef));
     return reply;
+    StackTraceEnd("QNetworkReply *Prestashop::add(const Product &product)");
 }
 
-void Prestashop::syncEdit(const Product &product) {
+void Prestashop::syncEdit(const Product &product)
+{
+    StackTraceBegin();
     QDomDocument doc = toXML(product);
     //qDebug() << doc.toByteArray();
     PSWebService::Options opt;
     opt.id = product.id;
     opt.resource = "products";
     QDomDocument result = mPSWebService->syncPut(opt, doc);
+    StackTraceEnd("void Prestashop::syncEdit(const Product &product)");
 }
 
-unsigned Prestashop::syncAdd(const Product &product) {
+unsigned Prestashop::syncAdd(const Product &product)
+{
+    StackTraceBegin();
     QDomDocument doc = toXML(product);
     PSWebService::Options opt;
     opt.resource = "products";
     QDomDocument result = mPSWebService->syncPost(opt, doc);
     unsigned id = Product::getId(result);
     return id;
+    StackTraceEnd("unsigned Prestashop::syncAdd(const Product &product)");
 }
 
-QDomDocument Prestashop::toXML(const Category &category) {
+QDomDocument Prestashop::toXML(const Category &category)
+{
     QDomDocument doc = getPrestaXML();
     QDomElement categoryElem = doc.createElement("category");
     doc.firstChild().appendChild(categoryElem);
@@ -140,7 +153,9 @@ QDomDocument Prestashop::toXML(const Category &category) {
     return doc;
 }
 
-QNetworkReply *Prestashop::edit(const Category &kategoria) {
+QNetworkReply *Prestashop::edit(const Category &kategoria)
+{
+    StackTraceBegin();
     QDomDocument doc = toXML(kategoria);
     PSWebService::Options opt;
     opt.id = kategoria.id;
@@ -148,18 +163,24 @@ QNetworkReply *Prestashop::edit(const Category &kategoria) {
     QNetworkReply* reply = mPSWebService->put(opt, doc);
     reply->setProperty("idRef", QVariant(kategoria.idRef));
     return reply;
+    StackTraceEnd("QNetworkReply *Prestashop::edit(const Category &kategoria)");
 }
 
-QNetworkReply *Prestashop::add(const Category &kategoria) {
+QNetworkReply *Prestashop::add(const Category &kategoria)
+{
+    StackTraceBegin();
     QDomDocument doc = toXML(kategoria);
     PSWebService::Options opt;
     opt.resource = "categories";
     QNetworkReply* reply = mPSWebService->post(opt, doc);
     reply->setProperty("idRef", QVariant(kategoria.idRef));
     return reply;
+    StackTraceEnd("QNetworkReply *Prestashop::add(const Category &kategoria)");
 }
 
-QNetworkReply *Prestashop::edit(const SpecificPrice &specificPrice) {
+QNetworkReply *Prestashop::edit(const SpecificPrice &specificPrice)
+{
+    StackTraceBegin();
     QDomDocument doc = toXML(specificPrice);
     PSWebService::Options opt;
     opt.id = specificPrice.id;
@@ -167,55 +188,141 @@ QNetworkReply *Prestashop::edit(const SpecificPrice &specificPrice) {
     QNetworkReply* reply = mPSWebService->put(opt, doc);
     reply->setProperty("id_product", QVariant(specificPrice.id_product));
     return reply;
+    StackTraceEnd("QNetworkReply *Prestashop::edit(const SpecificPrice &specificPrice)");
 }
 
-QNetworkReply *Prestashop::add(const SpecificPrice &specificPrice) {
+QNetworkReply *Prestashop::add(const SpecificPrice &specificPrice)
+{
+    StackTraceBegin();
     QDomDocument doc = toXML(specificPrice);
     PSWebService::Options opt;
     opt.resource = "specific_prices";
     QNetworkReply* reply = mPSWebService->post(opt, doc);
     reply->setProperty("id_product", QVariant(specificPrice.id_product));
     return reply;
+    StackTraceEnd("QNetworkReply *Prestashop::add(const SpecificPrice &specificPrice)");
 }
 
-void Prestashop::syncEdit(const Category &kategoria) {
+
+QNetworkReply *Prestashop::deleteProduct(uint id)
+{
+    StackTraceBegin();
+    PSWebService::Options opt;
+    opt.resource = "products";
+    opt.id = id;
+    QNetworkReply* reply = mPSWebService->del(opt);
+    reply->setProperty("id", QVariant(id));
+    return reply;
+    StackTraceEnd("QNetworkReply *Prestashop::deleteProduct(uint id)");
+}
+
+QNetworkReply *Prestashop::deleteCategory(uint id)
+{
+    StackTraceBegin();
+    PSWebService::Options opt;
+    opt.resource = "categories";
+    opt.id = id;
+    QNetworkReply* reply = mPSWebService->del(opt);
+    reply->setProperty("id", QVariant(id));
+    return reply;
+    StackTraceEnd("QNetworkReply *Prestashop::deleteCategory(uint id)");
+}
+
+QNetworkReply *Prestashop::deleteSpecificPrice(uint id)
+{
+    StackTraceBegin();
+    PSWebService::Options opt;
+    opt.resource = "specific_prices";
+    opt.id = id;
+    QNetworkReply* reply = mPSWebService->del(opt);
+    reply->setProperty("id", QVariant(id));
+    return reply;
+    StackTraceEnd("QNetworkReply *Prestashop::deleteSpecificPrice(uint id)");
+}
+
+void Prestashop::syncDeleteProduct(uint id)
+{
+    StackTraceBegin();
+    PSWebService::Options opt;
+    opt.resource = "products";
+    opt.id = id;
+    mPSWebService->syncDel(opt);
+    StackTraceEnd("QNetworkReply *Prestashop::syncDeleteProduct(uint id)");
+}
+
+void Prestashop::syncDeleteCategory(uint id)
+{
+    StackTraceBegin();
+    PSWebService::Options opt;
+    opt.resource = "categories";
+    opt.id = id;
+    mPSWebService->syncDel(opt);
+    StackTraceEnd("QNetworkReply *Prestashop::syncDeleteCategory(uint id)");
+}
+
+void Prestashop::syncDeleteSpecificPrice(uint id)
+{
+    StackTraceBegin();
+    PSWebService::Options opt;
+    opt.resource = "specific_prices";
+    opt.id = id;
+    mPSWebService->syncDel(opt);
+    StackTraceEnd("QNetworkReply *Prestashop::syncDeleteSpecificPrice(uint id)");
+}
+
+void Prestashop::syncEdit(const Category &kategoria)
+{
+    StackTraceBegin();
     QDomDocument doc = toXML(kategoria);
     PSWebService::Options opt;
     opt.id = kategoria.id;
     opt.resource = "categories";
     QDomDocument result = mPSWebService->syncPut(opt, doc);
+    StackTraceEnd("void Prestashop::syncEdit(const Category &kategoria)");
 }
 
-void Prestashop::syncEdit(const Order &zamowienie) {
+void Prestashop::syncEdit(const Order &zamowienie)
+{
+    StackTraceBegin();
     QDomDocument doc = toXML(zamowienie);
     PSWebService::Options opt;
     opt.id = zamowienie.id;
     opt.resource = "orders";
     QDomDocument result = mPSWebService->syncPut(opt, doc);
+    StackTraceEnd("void Prestashop::syncEdit(const Order &zamowienie)");
 }
 
-void Prestashop::syncEdit(const SpecificPrice &specificPrice) {
+void Prestashop::syncEdit(const SpecificPrice &specificPrice)
+{
+    StackTraceBegin();
     QDomDocument doc = toXML(specificPrice);
     PSWebService::Options opt;
     opt.id = specificPrice.id;
     opt.resource = "specific_prices";
     QDomDocument result = mPSWebService->syncPut(opt, doc);
+    StackTraceEnd("void Prestashop::syncEdit(const SpecificPrice &specificPrice)");
 }
 
-unsigned Prestashop::syncAdd(const Category &kategoria) {
+unsigned Prestashop::syncAdd(const Category &kategoria)
+{
+    StackTraceBegin();
     QDomDocument doc = toXML(kategoria);
     PSWebService::Options opt;
     opt.resource = "categories";
     QDomDocument result = mPSWebService->syncPost(opt, doc);
     unsigned id = Category::getId(result);
     return id;
+    StackTraceEnd("unsigned Prestashop::syncAdd(const Category &kategoria)");
 }
 
-void Prestashop::syncAdd(const SpecificPrice &specificPrice) {
+void Prestashop::syncAdd(const SpecificPrice &specificPrice)
+{
+    StackTraceBegin();
     QDomDocument doc = toXML(specificPrice);
     PSWebService::Options opt;
     opt.resource = "specific_prices";
     QDomDocument result = mPSWebService->syncPost(opt, doc);
+    StackTraceEnd("void Prestashop::syncAdd(const SpecificPrice &specificPrice)");
 }
 
 Order Prestashop::getOrder(QDomDocument &doc) const {
@@ -389,43 +496,37 @@ Order Prestashop::getOrder(uint id)
 
 QList<OrderHeader> Prestashop::getOrderHeader(const QMap<QString, QString> &filter)
 {
-    try {
-        PSWebService::Options opt;
-        opt.resource = "orders";
-        opt.display = "[id,current_state,total_paid,reference,date_add]";
-        QMapIterator<QString, QString> it(filter);
-        while(it.hasNext()) {
-            it.next();
-            opt.filter[it.key()] = it.value();
-        }
-        QDomDocument doc = mPSWebService->syncGet(opt);
-
-        QList<OrderHeader> orders;
-
-        QDomElement prestashop = doc.firstChildElement("prestashop");
-        if(!prestashop.isNull()) {
-            QDomNodeList orderNodeList = prestashop.firstChildElement("orders").elementsByTagName("order");
-            for(int i=0; i<orderNodeList.size(); ++i) {
-                OrderHeader orderHeader;
-                orderHeader.id = orderNodeList.at(i).firstChildElement("id").firstChild().toCDATASection().nodeValue().toUInt();
-                orderHeader.current_state = orderNodeList.at(i).firstChildElement("current_state").firstChild().toCDATASection().nodeValue().toUInt();
-                orderHeader.total_paid = orderNodeList.at(i).firstChildElement("total_paid").firstChild().toCDATASection().nodeValue().toFloat();
-                orderHeader.reference = orderNodeList.at(i).firstChildElement("reference").firstChild().toCDATASection().nodeValue();
-                orderHeader.date_add = orderNodeList.at(i).firstChildElement("date_add").firstChild().toCDATASection().nodeValue();
-                orders << orderHeader;
-            }
-            return orders;
-        } else {
-            throw QString("chujnia");
-            // TODO sygnalizacja błędu
-        }
-    } catch (PSWebService::PrestaError e) {
-        e.msg = "QList<OrderHeader> Prestashop::getOrderHeader(const QMap<QString, QString> &filter)";
-        throw e;
-    } catch (PSWebService::OtherError e) {
-        e.msg = "QList<OrderHeader> Prestashop::getOrderHeader(const QMap<QString, QString> &filter)";
-        throw e;
+    StackTraceBegin();
+    PSWebService::Options opt;
+    opt.resource = "orders";
+    opt.display = "[id,current_state,total_paid,reference,date_add]";
+    QMapIterator<QString, QString> it(filter);
+    while(it.hasNext()) {
+        it.next();
+        opt.filter[it.key()] = it.value();
     }
+    QDomDocument doc = mPSWebService->syncGet(opt);
+
+    QList<OrderHeader> orders;
+
+    QDomElement prestashop = doc.firstChildElement("prestashop");
+    if(!prestashop.isNull()) {
+        QDomNodeList orderNodeList = prestashop.firstChildElement("orders").elementsByTagName("order");
+        for(int i=0; i<orderNodeList.size(); ++i) {
+            OrderHeader orderHeader;
+            orderHeader.id = orderNodeList.at(i).firstChildElement("id").firstChild().toCDATASection().nodeValue().toUInt();
+            orderHeader.current_state = orderNodeList.at(i).firstChildElement("current_state").firstChild().toCDATASection().nodeValue().toUInt();
+            orderHeader.total_paid = orderNodeList.at(i).firstChildElement("total_paid").firstChild().toCDATASection().nodeValue().toFloat();
+            orderHeader.reference = orderNodeList.at(i).firstChildElement("reference").firstChild().toCDATASection().nodeValue();
+            orderHeader.date_add = orderNodeList.at(i).firstChildElement("date_add").firstChild().toCDATASection().nodeValue();
+            orders << orderHeader;
+        }
+        return orders;
+    } else {
+        throw QString("chujnia");
+        // TODO sygnalizacja błędu
+    }
+    StackTraceEnd("QList<OrderHeader> Prestashop::getOrderHeader(const QMap<QString, QString> &filter)");
 }
 
 QList<uint> Prestashop::getSpecificPrice(uint productId)

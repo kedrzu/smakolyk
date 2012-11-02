@@ -146,6 +146,8 @@ protected:
     bool mUploadFinished;
     uint mProduktyUpload;
     QMap<ZamowienieStatus, uint> mStatusyZamowien;
+    uint mConfigKatRootSprzedaz;
+    uint mConfigKatRootKatalog;
 };
 
 #endif // KCPRESTA_H

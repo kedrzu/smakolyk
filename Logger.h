@@ -13,8 +13,7 @@ public:
 signals:
     
 public slots:
-    void logError(PSWebService::PrestaError e);
-    void logError(PSWebService::OtherError e);
+    void logError(const Exception& e);
 
 protected:
     KCPresta* mPresta;

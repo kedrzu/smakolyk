@@ -8,7 +8,12 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow),
     mStart(false),
     mSekundy(0),
-    mMaxLogMsgs(1000)
+    mMaxLogMsgs(1000),
+    mWebService(0),
+    mPresta(0),
+    mKCFirma(0),
+    mKCPresta(0),
+    mLogger(0)
 {
     ui->setupUi(this);
     connect(&mTimer, SIGNAL(timeout()), this, SLOT(timeout()));
@@ -27,8 +32,12 @@ MainWindow::MainWindow(QWidget *parent) :
     // obiekt komunikacji z Presta
     mPresta = new Presta::Prestashop(config, mWebService, this);
 
-    // obiekt KC-Firmy
-    mKCFirma = new KCFirma(config, this);
+    try {
+        // obiekt KC-Firmy
+        mKCFirma = new KCFirma(config, this);
+    } catch(...) {
+
+    }
 
     // obiekt KC-Presta
     mKCPresta = new KCPresta(config, mPresta, mKCFirma, this);
@@ -60,11 +69,16 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
-    delete ui;
-    delete mWebService;
-    delete mKCFirma;
-    delete mKCPresta;
-    delete mLogger;
+    if(ui)
+        delete ui;
+    if(mWebService)
+        delete mWebService;
+    if(mKCFirma)
+        delete mKCFirma;
+    if(mKCPresta)
+        delete mKCPresta;
+    if(mLogger)
+        delete mLogger;
 }
 
 void MainWindow::start()
@@ -153,6 +167,16 @@ void MainWindow::wyslijTowary()
 
 void MainWindow::pobierzZamowienia()
 {
+    // kasowanie niepotrzebnych kategorii
+//    for(int i=50; i<160; ++i) {
+//        try {
+//            mPresta->syncDeleteCategory(i);
+//        } catch (Exception& e) {
+//            StackTrace(e, "MainWindow::MainWindow(QWidget *parent)");
+//            logError(e);
+//        }
+//    }
+
     ui->timeLeft->setText(QString::fromUtf8("POBIERAM ZAMÓWIENIA"));
     try {
         QList<Presta::OrderHeader> zamowienia = mKCPresta->pobierzZamowienia();
@@ -218,7 +242,7 @@ void MainWindow::koniec()
 
 void MainWindow::logError(const Exception &err)
 {
-    QString msg = QString::fromUtf8("Wystąpił błąd podczas błędu");
+    QString msg = QString::fromUtf8("Wystąpił błąd. Typ: ").append(err.type);
     QListWidgetItem* item = new QListWidgetItem(QIcon(":/icons/exclamation.png"), QTime::currentTime().toString("[HH:mm:ss] ")+msg, ui->console);
     mConsoleLog[item] = err.toHtml();
     clearLog();
@@ -287,9 +311,8 @@ void MainWindow::updateZamowienia(KCPresta::ZamowienieStatus status)
                 ++update;
             }
 
-        } catch (PSWebService::PrestaError e) {
-            logError(e);
-        } catch (PSWebService::OtherError e) {
+        } catch (Exception& e) {
+            StackTrace(e, "void MainWindow::updateZamowienia(KCPresta::ZamowienieStatus status="+QString::number(status)+")");
             logError(e);
         }
     }
