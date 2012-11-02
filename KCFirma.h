@@ -7,7 +7,7 @@
 #include <QVector>
 #include "Kategoria.h"
 #include "Produkt.h"
-
+#include "Exception.h"
 
 /*!
  \brief
@@ -91,7 +91,7 @@ public:
      \param id identyfikator w Prestashop
      \param idKC identyfikator w KC-Firma
     */
-    void zmianaKategorii(unsigned id, unsigned idKC);
+    void zmianaKategorii(unsigned idSprzedaz, unsigned idKatalog, unsigned idKC);
 
 public:
 
@@ -102,9 +102,12 @@ public:
 
 private:
 
+    Exception exception;
+
     QString mGenerujWzorzecKlasyfikacji(unsigned pozycja, QString status);
     bool mPorownajKlasyfikacje (QString wzor, QString klasyfikacja);
     QString mGenerujOpisT (QSqlQuery &zapytanie);
+    void mCzyscBaze();
 
     //Wzorzec z ktorym porównywana jest klasyfikacja w metodzie produkty (do operatora "LIKE")
     QString mWzorzecKlasyfikacjiSprzedaz;

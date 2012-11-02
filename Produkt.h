@@ -4,6 +4,7 @@
 #include <QString>
 #include <QDomDocument>
 #include <QList>
+#include <QDebug>
 
 /*!
  \brief
@@ -35,6 +36,7 @@ struct Produkt {
     QString opis; /*!< Olej to. */
     QString krotkiOpis; /*!< [DODAJ][EDYTUJ] Wpisz tutaj właściwości typu gramatura itp. */
 
+    void czytaj();
 /*!
  \brief
 

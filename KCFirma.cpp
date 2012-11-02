@@ -21,10 +21,10 @@ KCFirma::KCFirma(QSettings &settings, QObject *parent) :
     mKCPosDB.open();
 
    //////////////////////////
-
+/*
     if( (!mKCPosDB.isOpen()) || (!mKCFirmaDB.isOpen()) )
-        throw BLAD_POLACZENIA_Z_BAZA;
-
+        throw StackTrace(exception,"Blad otwierania bazy danych");
+*/
     //wczytawna z configa miejscie w klasyfikacji w ktorym jest zapisany status towaru(czy do sprzedazy?)
     //i generowanie odpowiedniego wzoru do zapytania SQL
     //przykładowa klasyfikacja 006000000007002000000000000000
@@ -41,6 +41,7 @@ KCFirma::KCFirma(QSettings &settings, QObject *parent) :
     mWzorzecKlasyfikacjiKatalog  = mGenerujWzorzecKlasyfikacji(nrKlasyfikacjiKatalog.toInt(), wzorKlasyfikacjiKatalog);
     mWzorzecKlasyfikacjiWylacz   = mGenerujWzorzecKlasyfikacji(nrKlasyfikacjiWylacz.toInt(),  wzorKlasyfikacjiWylacz);
 
+
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -48,18 +49,23 @@ Kategoria KCFirma::kategoria(unsigned idKC) const {
 
     Kategoria kat;
     QSqlQuery kcFirmaGrupa (mKCFirmaDB);
-    kcFirmaGrupa.exec("SELECT Nazwa, KodGrupy "
-                      "FROM Grupy "
+    kcFirmaGrupa.exec("SELECT Grupy.Nazwa, Grupy.KodGrupy, PrestaKategorie.IDKategoriaPresta "
+                      "FROM (Grupy "
+                      "LEFT JOIN PrestaKategorie) "
                       "WHERE KodGrupy='" + QString::number(idKC)+"'");
 
 
-    //qDebug()<< "Blad zapytania:\t" << kcFirmaGrupa.lastError().text();
+
     if(kcFirmaGrupa.next()){
     kat.nazwa = kcFirmaGrupa.value(0).toString();
-    kat.idKC = kcFirmaGrupa.value(1).toInt();
+    kat.idKC  = kcFirmaGrupa.value(1).toInt();
+    kat.id    = kcFirmaGrupa.value(2).toInt();
     }
-    else
-        throw BLAD_ZAPYTANIA_GRUPY;
+    else;
+        //throw StackTrace(exception,"Brak Kategorii o podanym idKC");
+
+   // if(kcFirmaGrupa.lastError().type() != QSqlError::NoError)
+     //   throw StackTrace(exception,"Blad zapytania" + kcFirmaGrupa.lastError().text());
 
     return kat;
 }
@@ -78,7 +84,7 @@ bool KCFirma::produkty(QMap<unsigned, Produkt> &produktyMapa, unsigned ilosc)
     QSqlQuery kcTowaryPos (mKCPosDB);
 
     kcTowaryPos.exec("SELECT Towary.Kod, Towary.KodPaskowy, Towary.Nazwa, Towary.Klasyfikacja, Towary.ce_sb, Towary.KodGrupy, "
-                     "PrestaTowary.IDPresta, PrestaKategorie.IDKategoriaPresta "
+                     "PrestaTowary.IDPresta, PrestaKategorie.IDKategoriaPrestaSprzedaz,PrestaKategorie.IDKategoriaPrestaKatalog Towary.Status "
                      "FROM (Towary "
                      "LEFT JOIN PrestaTowary "
                      "ON Towary.Kod = PrestaTowary.IDKC )"
@@ -86,7 +92,8 @@ bool KCFirma::produkty(QMap<unsigned, Produkt> &produktyMapa, unsigned ilosc)
                      "ON Towary.KodGrupy = PrestaKategorie.IDGrupyKC "
                      "WHERE ((Towary.Klasyfikacja LIKE " + mWzorzecKlasyfikacjiSprzedaz + " )"
                      "OR (Towary.Klasyfikacja LIKE " + mWzorzecKlasyfikacjiKatalog + " ) "
-                     "OR (Towary.Klasyfikacja LIKE " + mWzorzecKlasyfikacjiWylacz + "AND PrestaTowary.IDPresta <> 0 )) " );
+                     "OR (Towary.Klasyfikacja LIKE " + mWzorzecKlasyfikacjiWylacz + "AND PrestaTowary.IDPresta <> 0 )) "
+                     "LIMIT " + QString::number(ilosc));
 
 
     //////////////////////////
@@ -106,20 +113,26 @@ bool KCFirma::produkty(QMap<unsigned, Produkt> &produktyMapa, unsigned ilosc)
                            "LEFT JOIN Jednostki "
                            "ON Towary.IdJedNorm = Jednostki.Id ) "
                            "WHERE Towary.Kod = '" + kcTowaryPos.value(0).toString() + "'");
+
+
         kcTowaryFirma.next();
 
         Produkt produkt;
 
         //ustawianie statusu
         QString tmp = kcTowaryPos.value(3).toString();
-        if (mPorownajKlasyfikacje(mWzorzecKlasyfikacjiSprzedaz, tmp))
-            produkt.status = Produkt::SPRZEDAZ;
-        else
-            if(mPorownajKlasyfikacje(mWzorzecKlasyfikacjiKatalog, tmp))
-                produkt.status = Produkt::KATALOG;
+        if(kcTowaryPos.value(9).toBool()){
+            if (mPorownajKlasyfikacje(mWzorzecKlasyfikacjiSprzedaz, tmp))
+                produkt.status = Produkt::SPRZEDAZ;
             else
-                if (mPorownajKlasyfikacje(mWzorzecKlasyfikacjiWylacz, tmp))
+                if(mPorownajKlasyfikacje(mWzorzecKlasyfikacjiKatalog, tmp))
+                    produkt.status = Produkt::KATALOG;
+                else
+                    if (mPorownajKlasyfikacje(mWzorzecKlasyfikacjiWylacz, tmp))
                         produkt.status = Produkt::WYLACZ;
+        }
+        else
+            produkt.status = Produkt::WYLACZ;
 
         produkt.id = kcTowaryPos.value(6).toInt();
 
@@ -132,6 +145,7 @@ bool KCFirma::produkty(QMap<unsigned, Produkt> &produktyMapa, unsigned ilosc)
         produkt.cenaKC = kcTowaryPos.value(4).toFloat();
 
         produkt.kategoria = kcTowaryPos.value(7).toInt();
+        produkt.kategoriaKatalog = kcTowaryPos.value(8).toInt();
 
         produkt.kategoriaKC = kcTowaryPos.value(5).toInt();
 
@@ -141,14 +155,8 @@ bool KCFirma::produkty(QMap<unsigned, Produkt> &produktyMapa, unsigned ilosc)
 
         //krotki opis (z KCfirmy)
         produkt.krotkiOpis = mGenerujOpisT(kcTowaryFirma);
-/*
-        qDebug()<< produkt.nazwa <<"\t"<<
-                   produkt.cenaKC <<"\t"<<
-                   produkt.ean << "\t"<<
-                   produkt.id<< "\t" <<
-                   produkt.idKC << "\t"<<
-                   produkt.krotkiOpis << "\t" ;
-*/
+
+        produkt.czytaj();
 
         produktyMapa[produkt.idKC] = produkt;
 
@@ -164,7 +172,13 @@ bool KCFirma::produkty(QMap<unsigned, Produkt> &produktyMapa, unsigned ilosc)
                          "WHERE Kod =" + QString::number(listaProduktow[i]));
     }
 
-    return mKCPosDB.commit();
+    bool tmp1 = mKCPosDB.commit();
+/*
+    if(mKCPosDB.lastError().type() != QSqlError::NoError)
+        throw StackTrace(exception,"Blad zapytania" + mKCPosDB.lastError().text());
+*/
+
+    return tmp1;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -188,31 +202,33 @@ void KCFirma::zmianaProduktu(unsigned id, unsigned idKC, float cena) {
         zmiana.exec("INSERT INTO PrestaTowary ( IDKC, IDPresta, CenaPresta) "
                     "VALUES (" + QString::number(idKC) +", " + QString::number(id) + ", " +
                     QString::number(cena)+ " )");
-        qDebug()<<zmiana.lastError().text();
+    //    qDebug()<<zmiana.lastError().text();
     }
 
 }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-void KCFirma::zmianaKategorii(unsigned id, unsigned idKC) {
+void KCFirma::zmianaKategorii(unsigned idSprzedaz, unsigned idKatalog, unsigned idKC) {
     //sprawdzanie czy jest juz w bazie IDGrupyKC, IDKategoriaPresta
     QSqlQuery sprawdzanie(mKCPosDB);
-    sprawdzanie.exec("SELECT IDKategoriaPresta "
+    sprawdzanie.exec("SELECT IDKategoriaPrestaSprzedaz,IDKategoriaPrestaKatalog "
                      "FROM PrestaKategorie "
                      "WHERE IDGrupyKC =" +QString::number(idKC));
 
     QSqlQuery zmiana(mKCPosDB);
 
+
     //jezeli w bazie jest jedna krotka to ...(ms acces nie obsluguje metody size() )
     if(sprawdzanie.next()){
         zmiana.exec("UPDATE PrestaKategorie "
-                    "SET IDKategoriaPresta =" + QString::number(id) + " " +
+                    "SET IDKategoriaPrestaSprzedaz =" + QString::number(idSprzedaz) + " " +
+                    "IDKategoriaPrestaKatalog =" +QString::number(idKatalog) +  " " +
                     "WHERE IDGrupyKC =" +QString::number(idKC));
     }
     else{
-        zmiana.exec("INSERT INTO PrestaKategorie ( IDGrupyKC, IDKategoriaPresta) "
-                    "VALUES (" + QString::number(idKC) +", " + QString::number(id)+ " )");
+        zmiana.exec("INSERT INTO PrestaKategorie ( IDGrupyKC, IDKategoriaPrestaSprzedaz ,IDKategoriaPrestaKatalog) "
+                    "VALUES (" + QString::number(idKC) +", " + QString::number(idSprzedaz)+ ", " + QString::number(idKatalog)+  " )");
     }
 }
 
@@ -254,4 +270,22 @@ QString KCFirma::mGenerujOpisT (QSqlQuery &zapytanie){
 
 }
 
-/////////////////////////////////KONIECC//////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void KCFirma::mCzyscBaze(){
+
+    QSqlQuery czysc(mKCPosDB);
+    czysc.exec(QString("DELETE Towary.* "
+                       "FROM Towary "
+                       "WHERE ( ( NOT EXISTS "
+                       "( SELECT PrestaTowary.IDKC, PrestaTowary.IDPresta "
+                       "FROM PrestaTowary WHERE Towary.Kod = PrestaTowary.IDKC ) ) "
+                       "AND Towary.Klasyfikacja LIKE %1 )").arg(mWzorzecKlasyfikacjiWylacz));
+
+
+
+}
+
+
+
+//////////////////////////////////////////KONIECC/////////////////////////////////////////////////////
