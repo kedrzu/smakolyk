@@ -140,9 +140,11 @@ protected:
     Presta::Prestashop *mPresta;
     KCFirma *mKCFirma;
     PSWebService* mPSWebService;
-    QMap<unsigned, unsigned> mKatNadrzedne;
-    QMap<unsigned, Produkt> mProdukty;
-    QMap<unsigned, ProduktError> mProduktyError;
+    QMap<uint, uint> mKatNadrzedne;
+    QMap<uint, uint> mKatDodaneSprz;
+    QMap<uint, uint> mKatDodaneKat;
+    QMap<uint, Produkt> mProdukty;
+    QMap<uint, ProduktError> mProduktyError;
     bool mUploadFinished;
     uint mProduktyUpload;
     QMap<ZamowienieStatus, uint> mStatusyZamowien;

@@ -17,7 +17,7 @@ unsigned Product::getId(QDomDocument &doc) {
     if(!prestashop.isNull()) {
         QDomElement product = prestashop.firstChildElement("product");
         if(!product.isNull()) {
-            return product.firstChildElement("id").toCDATASection().nodeValue().toUInt();
+            return product.firstChildElement("id").firstChild().toCDATASection().nodeValue().toUInt();
         } else return 0;
     } else return 0;
 }
@@ -94,7 +94,7 @@ uint Category::getId(QDomDocument &doc) {
     if(!prestashop.isNull()) {
         QDomElement category = prestashop.firstChildElement("category");
         if(!category.isNull()) {
-            return category.firstChildElement("id").toCDATASection().nodeValue().toUInt();
+            return category.firstChildElement("id").firstChild().toCDATASection().nodeValue().toUInt();
         } else return 0;
     } else return 0;
 }

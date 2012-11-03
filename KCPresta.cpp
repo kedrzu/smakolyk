@@ -82,6 +82,8 @@ void KCPresta::uploadProdukty() {
 
     // kasujemy bufor błędnie uploadowanych produktów
     mProduktyError.clear();
+    mKatDodaneSprz.clear();
+    mKatDodaneKat.clear();
 
     if(mProdukty.empty()) {
         mUploadFinished = true;
@@ -95,42 +97,49 @@ void KCPresta::uploadProdukty() {
         bool err = false;
         Produkt prod = produkt;
         // kategoria produktu jest nowa, lub była w Presta ale już jej nie ma => dodajemy do Presta
-        bool dodajKatSprz = (prod.kategoria == 0 || !mKatNadrzedne.contains(prod.kategoria)) && prod.status != Produkt::KATALOG;
-        bool dodajKatKata = prod.kategoriaKatalog == 0 || !mKatNadrzedne.contains(prod.kategoriaKatalog);
+        bool dodajKatSprz = (prod.kategoria == 0 || !mKatNadrzedne.contains(prod.kategoria)) && !mKatDodaneSprz.contains(prod.kategoriaKC) && prod.status != Produkt::KATALOG;
+        bool dodajKatKata = (prod.kategoriaKatalog == 0 || !mKatNadrzedne.contains(prod.kategoriaKatalog)) && !mKatDodaneKat.contains(prod.kategoriaKC);
         if(dodajKatSprz || dodajKatKata) {
-            Kategoria kat = mKCFirma->kategoria(prod.kategoriaKC);
-            kat.id = 0;
-            // dodajemy kategorię, jeżeli sie nie uda emitujemy blad i kontynujemy z nastepnym produktem
-            uint idSprz = 0;
             try {
-                // kategoria sprzedaży dodawana jest synchronicznie
-                Category categorySprzedaz = kc2presta(kat);
-                categorySprzedaz.id_parent = mConfigKatRootSprzedaz;
-                idSprz = mPresta->syncAdd(categorySprzedaz);
-                mKatNadrzedne[idSprz] = categorySprzedaz.id_parent;
+                Kategoria kat = mKCFirma->kategoria(prod.kategoriaKC);
+                kat.id = 0;
+                // dodajemy kategorię, jeżeli sie nie uda emitujemy blad i kontynujemy z nastepnym produktem
+                uint idSprz = 0;
+                if(dodajKatSprz) {
+                    try {
+                        // kategoria sprzedaży dodawana jest synchronicznie
+                        Category categorySprzedaz = kc2presta(kat);
+                        categorySprzedaz.id_parent = mConfigKatRootSprzedaz;
+                        idSprz = mPresta->syncAdd(categorySprzedaz);
+                        mKatNadrzedne[idSprz] = categorySprzedaz.id_parent;
+                    } catch (Exception& e) {
+                        StackTrace(e, "void KCPresta::uploadProdukty()");
+                        emit error(e);
+                        err = true;
+                    }
+                }
+                uint idKat = 0;
+                if(!err && dodajKatKata) {
+                    try {
+                        // kategoria katalogu dodawana jest synchronicznie
+                        Category categoryKatalog = kc2presta(kat);
+                        categoryKatalog.id_parent = mConfigKatRootKatalog;
+                        idKat = mPresta->syncAdd(categoryKatalog);
+                        mKatNadrzedne[idKat] = categoryKatalog.id_parent;
+                    } catch (Exception& e) {
+                        StackTrace(e, "void KCPresta::uploadProdukty()");
+                        emit error(e);
+                        err = true;
+                    }
+                }
+                // TODO Przydałoby sie zrobić kasowanie kategorii, jeżeli nie udało się poprawnie wysłać obu
+                if(!err) {
+                    // aktualizujemy powiązanie
+                    mKCFirma->zmianaKategorii(idSprz, idKat, prod.kategoriaKC);
+                }
             } catch (Exception& e) {
                 StackTrace(e, "void KCPresta::uploadProdukty()");
                 emit error(e);
-                err = true;
-            }
-            uint idKat = 0;
-            if(!err) {
-                try {
-                    // kategoria katalogu dodawana jest synchronicznie
-                    Category categoryKatalog = kc2presta(kat);
-                    categoryKatalog.id_parent = mConfigKatRootKatalog;
-                    idKat = mPresta->syncAdd(categoryKatalog);
-                    mKatNadrzedne[idKat] = categoryKatalog.id_parent;
-                } catch (Exception& e) {
-                    StackTrace(e, "void KCPresta::uploadProdukty()");
-                    emit error(e);
-                    err = true;
-                }
-            }
-            // TODO Przydałoby sie zrobić kasowanie kategorii, jeżeli nie udało się poprawnie wysłać obu
-            if(!err) {
-                // aktualizujemy powiązanie
-                mKCFirma->zmianaKategorii(idSprz, idKat, prod.kategoriaKC);
             }
         }
         // jeżeli produkt ma już prawidłową kategorię, to dodajemy

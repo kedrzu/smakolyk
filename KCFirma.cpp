@@ -44,6 +44,7 @@ KCFirma::KCFirma(QSettings &settings, QObject *parent) :
     mWzorzecKlasyfikacjiKatalog  = mGenerujWzorzecKlasyfikacji(nrKlasyfikacjiKatalog.toInt(), wzorKlasyfikacjiKatalog);
     mWzorzecKlasyfikacjiWylacz   = mGenerujWzorzecKlasyfikacji(nrKlasyfikacjiWylacz.toInt(),  wzorKlasyfikacjiWylacz);
 
+    qDebug() << mPorownajKlasyfikacje(mWzorzecKlasyfikacjiSprzedaz,mWzorzecKlasyfikacjiSprzedaz);
 
 }
 
@@ -52,17 +53,30 @@ Kategoria KCFirma::kategoria(unsigned idKC) const {
 
     Kategoria kat;
     QSqlQuery kcFirmaGrupa (mKCFirmaDB);
-    kcFirmaGrupa.exec("SELECT Grupy.Nazwa, Grupy.KodGrupy, PrestaKategorie.IDKategoriaPresta "
-                      "FROM (Grupy "
-                      "LEFT JOIN PrestaKategorie) "
+    kcFirmaGrupa.exec("SELECT Grupy.Nazwa, Grupy.KodGrupy "
+                      "FROM Grupy "
                       "WHERE KodGrupy='" + QString::number(idKC)+"'");
 
+    QSqlQuery kcPosGrupa (mKCPosDB);
+    kcPosGrupa.exec("SELECT PrestaKategorie.IDKategoriaPrestaSprzedaz, PrestaKategorie.IDKategoriaPrestaKatalog "
+                      "FROM PrestaKategorie "
+                      "WHERE IDGrupyKC=" + QString::number(idKC));
 
+    qDebug() << kcFirmaGrupa.lastError().text();
+    qDebug() << kcPosGrupa.lastError().text();
 
     if(kcFirmaGrupa.next()){
         kat.nazwa = kcFirmaGrupa.value(0).toString();
         kat.idKC  = kcFirmaGrupa.value(1).toInt();
-        kat.id    = kcFirmaGrupa.value(2).toInt();
+        if(kcPosGrupa.next()){
+            kat.id    = kcPosGrupa.value(0).toInt();
+            kat.idKatalog = kcPosGrupa.value(1).toInt();
+        }
+        else
+        {
+            kat.id = 0;
+            kat.idKatalog = 0;
+        }
     }
     else {
         Exception e;
@@ -75,6 +89,13 @@ Kategoria KCFirma::kategoria(unsigned idKC) const {
         Exception e;
         e.type = QString::fromUtf8("Błąd bazy danych");
         e.msg = kcFirmaGrupa.lastError().text();
+        throw e;
+    }
+
+    if(kcPosGrupa.lastError().type() != QSqlError::NoError) {
+        Exception e;
+        e.type = QString::fromUtf8("Błąd bazy danych");
+        e.msg = kcPosGrupa.lastError().text();
         throw e;
     }
 
@@ -94,24 +115,27 @@ bool KCFirma::produkty(QMap<unsigned, Produkt> &produktyMapa, unsigned ilosc)
     // nazwa ( Nazwa), ean ( KodPaskowy)
     QSqlQuery kcTowaryPos (mKCPosDB);
 
-    kcTowaryPos.exec("SELECT Towary.Kod, Towary.KodPaskowy, Towary.Nazwa, Towary.Klasyfikacja, Towary.ce_sb, Towary.KodGrupy, "
-                     "PrestaTowary.IDPresta, PrestaKategorie.IDKategoriaPrestaSprzedaz,PrestaKategorie.IDKategoriaPrestaKatalog Towary.Status "
+    kcTowaryPos.exec("SELECT TOP " + QString::number(ilosc)+" "
+                     "Towary.Kod, Towary.KodPaskowy, Towary.Nazwa, Towary.Klasyfikacja, Towary.ce_sb, Towary.KodGrupy, "
+                     "PrestaTowary.IDPresta, PrestaKategorie.IDKategoriaPrestaSprzedaz,PrestaKategorie.IDKategoriaPrestaKatalog, Towary.Status "
                      "FROM (Towary "
                      "LEFT JOIN PrestaTowary "
                      "ON Towary.Kod = PrestaTowary.IDKC )"
                      "LEFT JOIN PrestaKategorie "
                      "ON Towary.KodGrupy = PrestaKategorie.IDGrupyKC "
-                     "WHERE ((Towary.Klasyfikacja LIKE " + mWzorzecKlasyfikacjiSprzedaz + " )"
-                     "OR (Towary.Klasyfikacja LIKE " + mWzorzecKlasyfikacjiKatalog + " ) "
-                     "OR (Towary.Klasyfikacja LIKE " + mWzorzecKlasyfikacjiWylacz + "AND PrestaTowary.IDPresta <> 0 )) "
-                     "LIMIT " + QString::number(ilosc));
+                     "WHERE ((Towary.Klasyfikacja LIKE " + mWzorzecKlasyfikacjiSprzedaz + " AND Towary.Status = 1 )"
+                     "OR (Towary.Klasyfikacja LIKE " + mWzorzecKlasyfikacjiKatalog + " AND Towary.Status = 1 ) "
+                     "OR (Towary.Klasyfikacja LIKE " + mWzorzecKlasyfikacjiWylacz + " AND NOT(PrestaTowary.IDPresta) IS NULL AND Towary.Status = 1 )) " );
+
 
 
     //////////////////////////
     //Pozycje z KC Firmy cenaPresta(ce_sb2) krotkiOpis ( gramatura, jednostka)
-
+    qDebug() << kcTowaryPos.lastError().text();
+    qDebug() << kcTowaryPos.lastQuery();
 
     QVector<unsigned> listaProduktow (ilosc);
+
     //////////////////////////
     for (int i = 0; i < ilosc && kcTowaryPos.next() ; i++ ){
 
@@ -132,18 +156,19 @@ bool KCFirma::produkty(QMap<unsigned, Produkt> &produktyMapa, unsigned ilosc)
 
         //ustawianie statusu
         QString tmp = kcTowaryPos.value(3).toString();
+        qDebug() << tmp ;
         if(kcTowaryPos.value(9).toBool()){
+
             if (mPorownajKlasyfikacje(mWzorzecKlasyfikacjiSprzedaz, tmp))
                 produkt.status = Produkt::SPRZEDAZ;
             else
                 if(mPorownajKlasyfikacje(mWzorzecKlasyfikacjiKatalog, tmp))
                     produkt.status = Produkt::KATALOG;
                 else
-                    if (mPorownajKlasyfikacje(mWzorzecKlasyfikacjiWylacz, tmp))
-                        produkt.status = Produkt::WYLACZ;
+                    produkt.status = Produkt::WYLACZ;
         }
         else
-            produkt.status = Produkt::WYLACZ;
+            produkt.status = Produkt::USUN;
 
         produkt.id = kcTowaryPos.value(6).toInt();
 
@@ -278,11 +303,17 @@ QString KCFirma::mGenerujWzorzecKlasyfikacji(unsigned pozycja, QString status){
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 bool KCFirma::mPorownajKlasyfikacje (QString wzor, QString klasyfikacja){
 
+    /*
     for (int i = 0; i < wzor.size(); i++)
         if(!(wzor[i].toAscii() == klasyfikacja[i].toAscii() || wzor[i].toAscii() == '_'))
             return 0;
     return 1;
-
+*/
+    qDebug() << klasyfikacja.mid(0,3) << wzor.mid(1,3);
+    if(klasyfikacja.mid(0,3) == wzor.mid(1,3))
+        return 1;
+    else
+        return 0;
 
 }
 
